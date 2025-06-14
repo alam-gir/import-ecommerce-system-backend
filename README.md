@@ -66,9 +66,10 @@ It handles everything from **authentication** to **pagination**, with a special 
     "age": 25
   },
   "timestamp": "2024-12-07T10:30:00Z"
-}```json
-
-### ˣ Error Response
+}
+```
+### X Error Response
+```json
 {
   "success": false,
   "message": "Validation failed",
@@ -83,9 +84,7 @@ It handles everything from **authentication** to **pagination**, with a special 
     }
   ]
 }
-
-
+```
 
 📝 License
 This project is licensed under the MIT License.
-
