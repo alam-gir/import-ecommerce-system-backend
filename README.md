@@ -66,7 +66,7 @@ It handles everything from **authentication** to **pagination**, with a special 
     "age": 25
   },
   "timestamp": "2024-12-07T10:30:00Z"
-}
+}```
 
 ### ˣ Error Response
 ```json
@@ -83,7 +83,7 @@ It handles everything from **authentication** to **pagination**, with a special 
       "message": "Invalid email format"
     }
   ]
-}
+}```
 
 
 📝 License
