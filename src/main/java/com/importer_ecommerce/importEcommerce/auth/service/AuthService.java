@@ -33,10 +33,10 @@ public class AuthService {
             );
             
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            User user = userService.getUserByUsername(userDetails.getUsername());
+            User user = (User) userDetails;
             
             // Update last login
-            userService.updateLastLogin(user.getUsername());
+            userService.updateLastLogin(user.getId());
             
             // Generate tokens
             String accessToken = jwtUtils.generateToken(userDetails);
@@ -67,7 +67,7 @@ public class AuthService {
         token = refreshTokenService.verifyExpiration(token);
         
         // Generate new access token
-        User user = token.getUser();
+        User user = userService.getUserById(token.getUserId());
         String newAccessToken = jwtUtils.generateToken(user);
         
         log.info("Token refreshed for user: {}", user.getUsername());
@@ -86,7 +86,7 @@ public class AuthService {
         RefreshToken token = refreshTokenService.findByToken(refreshToken)
             .orElseThrow(() -> new BusinessException("Refresh token not found", ErrorCodes.TOKEN_INVALID));
         
-        refreshTokenService.deleteByUser(token.getUser());
-        log.info("User logged out: {}", token.getUser().getUsername());
+        refreshTokenService.deleteByUserId(token.getUserId());
+        log.info("User logged out: {}", token.getUserId());
     }
 }

@@ -4,7 +4,9 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "customer_addresses")
@@ -14,22 +16,12 @@ import java.time.LocalDateTime;
 public class CustomerAddress {
     
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
     
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
-    
-    @Column(name = "address_type", nullable = false)
-    @Enumerated(EnumType.STRING)
-    private AddressType addressType;
-    
-    @Column(name = "full_name", nullable = false)
-    private String fullName;
-    
-    @Column(name = "phone_number")
-    private String phoneNumber;
+    @JoinColumn(name = "customer_id", nullable = false)
+    private CustomerProfile customer;
     
     @Column(name = "address_line1", nullable = false)
     private String addressLine1;
@@ -52,17 +44,15 @@ public class CustomerAddress {
     @Column(name = "is_default")
     private boolean isDefault = false;
     
-    @Column(name = "created_at", nullable = false)
+    @Column(name = "address_type")
+    @Enumerated(EnumType.STRING)
+    private AddressType addressType = AddressType.SHIPPING;
+    
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
     
-    @Column(name = "updated_at")
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
-    
-    public enum AddressType {
-        SHIPPING,
-        BILLING,
-        BOTH
-    }
     
     @PrePersist
     protected void onCreate() {
@@ -73,5 +63,9 @@ public class CustomerAddress {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+    }
+    
+    public enum AddressType {
+        SHIPPING, BILLING, BOTH
     }
 }

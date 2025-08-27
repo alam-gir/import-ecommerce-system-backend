@@ -23,11 +23,11 @@ public class DataInitializer implements CommandLineRunner {
             log.info("Test customer created successfully");
             
             // Create a test admin
-            userService.createStaff("admin", "admin@example.com", "admin123", "Admin User", UserRole.ADMIN);
+            userService.createStaff("admin@example.com", "Admin User", "admin123");
             log.info("Test admin created successfully");
             
             // Create a test staff
-            userService.createStaff("staff", "staff@example.com", "staff123", "Staff User", UserRole.STAFF);
+            userService.createStaff("staff@example.com", "Staff User", "staff123");
             log.info("Test staff created successfully");
             
         } catch (Exception e) {

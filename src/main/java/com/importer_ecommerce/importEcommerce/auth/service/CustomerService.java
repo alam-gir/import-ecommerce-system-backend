@@ -11,6 +11,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -41,7 +43,7 @@ public class CustomerService {
     }
     
     @Transactional
-    public CustomerProfile updateProfile(Long userId, ProfileUpdateRequest request) {
+    public CustomerProfile updateProfile(UUID userId, ProfileUpdateRequest request) {
         CustomerProfile profile = userService.updateCustomerProfile(
             userId, 
             request.getFullName()
@@ -61,7 +63,7 @@ public class CustomerService {
         // Send profile update confirmation email if email exists
         if (profile.getEmail() != null) {
             try {
-                emailService.sendProfileUpdateEmail(profile.getEmail(), profile.getFullName(), "Profile Information");
+                emailService.sendProfileUpdateEmail(profile.getEmail(), profile.getUser().getFullName(), "Profile Information");
             } catch (Exception e) {
                 log.warn("Failed to send profile update email to: {}", profile.getEmail(), e);
             }
@@ -70,11 +72,11 @@ public class CustomerService {
         return profile;
     }
     
-    public CustomerProfile getProfile(Long userId) {
+    public CustomerProfile getProfile(UUID userId) {
         return userService.getCustomerProfile(userId);
     }
     
-    public CustomerProfileResponse getProfileResponse(Long userId) {
+    public CustomerProfileResponse getProfileResponse(UUID userId) {
         CustomerProfile profile = userService.getCustomerProfile(userId);
         return convertToProfileResponse(profile);
     }
@@ -82,7 +84,7 @@ public class CustomerService {
     public CustomerProfileResponse convertToProfileResponse(CustomerProfile profile) {
         return CustomerProfileResponse.builder()
                 .id(profile.getId())
-                .fullName(profile.getFullName())
+                .fullName(profile.getUser().getFullName())
                 .mobileNumber(profile.getUser().getMobileNumber())
                 .email(profile.getEmail())
                 .emailVerified(profile.isEmailVerified())
@@ -94,7 +96,7 @@ public class CustomerService {
     }
     
     @Transactional
-    public CustomerProfileResponse updateEmail(Long userId, EmailUpdateRequest request) {
+    public CustomerProfileResponse updateEmail(UUID userId, EmailUpdateRequest request) {
         // Update email in customer profile
         CustomerProfile profile = userService.updateCustomerEmail(userId, request.getEmail());
         
@@ -109,7 +111,7 @@ public class CustomerService {
         return convertToProfileResponse(profile);
     }
     
-    public void changePassword(Long userId, ChangePasswordRequest request) {
+    public void changePassword(UUID userId, ChangePasswordRequest request) {
         userService.changePassword(userId, request.getCurrentPassword(), request.getNewPassword());
     }
     

@@ -1,16 +1,17 @@
 package com.importer_ecommerce.importEcommerce.auth.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
-import java.util.List;
+import java.util.Collections;
+import java.util.UUID;
 
 @Entity
 @Table(name = "users")
@@ -20,8 +21,8 @@ import java.util.List;
 public class User implements UserDetails {
     
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
     
     @Column(unique = true, nullable = false)
     private String username;
@@ -32,10 +33,10 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private String password;
     
-    @Column(name = "mobile_number", unique = true)
+    @Column(name = "mobile_number", unique = true, nullable = false)
     private String mobileNumber;
     
-    @Column(name = "full_name")
+    @Column(name = "full_name", nullable = false)
     private String fullName;
     
     @Enumerated(EnumType.STRING)
@@ -44,16 +45,16 @@ public class User implements UserDetails {
     
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private UserStatus status = UserStatus.ACTIVE;
+    private UserStatus status;
     
-    @Column(name = "created_at", nullable = false)
+    @Column(name = "last_login")
+    private LocalDateTime lastLogin;
+    
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
     
-    @Column(name = "updated_at")
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
-    
-    @Column(name = "last_login_at")
-    private LocalDateTime lastLoginAt;
     
     @PrePersist
     protected void onCreate() {
@@ -68,7 +69,7 @@ public class User implements UserDetails {
     
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
+        return Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role.name()));
     }
     
     @Override

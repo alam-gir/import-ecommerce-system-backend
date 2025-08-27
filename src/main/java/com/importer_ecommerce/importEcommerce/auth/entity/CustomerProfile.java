@@ -4,7 +4,9 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "customer_profiles")
@@ -14,20 +16,17 @@ import java.time.LocalDateTime;
 public class CustomerProfile {
     
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
     
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false, unique = true)
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
-    
-    @Column(name = "full_name")
-    private String fullName;
     
     @Column(unique = true)
     private String email;
     
-    @Column(name = "email_verified")
+    @Column(name = "email_verified", nullable = false)
     private boolean emailVerified = false;
     
     @Column(name = "profile_picture")
@@ -36,10 +35,10 @@ public class CustomerProfile {
     @Column(name = "date_of_birth")
     private LocalDateTime dateOfBirth;
     
-    @Column(name = "created_at", nullable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
     
-    @Column(name = "updated_at")
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
     
     @PrePersist

@@ -15,6 +15,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/api/customers")
 @RequiredArgsConstructor
@@ -35,7 +37,7 @@ public class CustomerController {
     @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<ApiResponse<CustomerProfileResponse>> getProfile(HttpServletRequest request) {
         String token = extractTokenFromRequest(request);
-        Long userId = jwtUtils.extractUserId(token);
+        UUID userId = jwtUtils.extractUserId(token);
         
         if (userId == null) {
             return ResponseEntity.badRequest().body(ApiResponse.error("Invalid token", "TOKEN_ERROR", request.getRequestURI()));
@@ -49,7 +51,7 @@ public class CustomerController {
     @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<ApiResponse<CustomerProfileResponse>> updateProfile(@Valid @RequestBody ProfileUpdateRequest request, HttpServletRequest httpRequest) {
         String token = extractTokenFromRequest(httpRequest);
-        Long userId = jwtUtils.extractUserId(token);
+        UUID userId = jwtUtils.extractUserId(token);
         
         if (userId == null) {
             return ResponseEntity.badRequest().body(ApiResponse.error("Invalid token", "TOKEN_ERROR", httpRequest.getRequestURI()));
@@ -64,7 +66,7 @@ public class CustomerController {
     @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<ApiResponse<CustomerProfileResponse>> updateEmail(@Valid @RequestBody EmailUpdateRequest request, HttpServletRequest httpRequest) {
         String token = extractTokenFromRequest(httpRequest);
-        Long userId = jwtUtils.extractUserId(token);
+        UUID userId = jwtUtils.extractUserId(token);
         
         if (userId == null) {
             return ResponseEntity.badRequest().body(ApiResponse.error("Invalid token", "TOKEN_ERROR", httpRequest.getRequestURI()));
@@ -78,7 +80,7 @@ public class CustomerController {
     @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<ApiResponse<Void>> changePassword(@Valid @RequestBody ChangePasswordRequest request, HttpServletRequest httpRequest) {
         String token = extractTokenFromRequest(httpRequest);
-        Long userId = jwtUtils.extractUserId(token);
+        UUID userId = jwtUtils.extractUserId(token);
         
         if (userId == null) {
             return ResponseEntity.badRequest().body(ApiResponse.error("Invalid token", "TOKEN_ERROR", httpRequest.getRequestURI()));

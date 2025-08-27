@@ -1,22 +1,18 @@
 package com.importer_ecommerce.importEcommerce.auth.repository;
 
 import com.importer_ecommerce.importEcommerce.auth.entity.CustomerAddress;
-import com.importer_ecommerce.importEcommerce.auth.entity.User;
+import com.importer_ecommerce.importEcommerce.auth.entity.CustomerProfile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.UUID;
 
 @Repository
-public interface CustomerAddressRepository extends JpaRepository<CustomerAddress, Long> {
+public interface CustomerAddressRepository extends JpaRepository<CustomerAddress, UUID> {
     
-    List<CustomerAddress> findByUser(User user);
+    List<CustomerAddress> findByCustomer(CustomerProfile customer);
     
-    List<CustomerAddress> findByUserAndAddressType(User user, CustomerAddress.AddressType addressType);
-    
-    Optional<CustomerAddress> findByUserAndIsDefaultTrue(User user);
-    
-    Optional<CustomerAddress> findByUserAndAddressTypeAndIsDefaultTrue(User user, CustomerAddress.AddressType addressType);
+    List<CustomerAddress> findByCustomerAndAddressType(CustomerProfile customer, CustomerAddress.AddressType addressType);
 }
 

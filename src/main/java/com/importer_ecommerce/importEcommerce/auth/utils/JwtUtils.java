@@ -12,6 +12,7 @@ import javax.crypto.SecretKey;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @Component
 @Slf4j
@@ -36,7 +37,7 @@ public class JwtUtils {
         // Add user ID to claims if available
         if (userDetails instanceof com.importer_ecommerce.importEcommerce.auth.entity.User) {
             com.importer_ecommerce.importEcommerce.auth.entity.User user = (com.importer_ecommerce.importEcommerce.auth.entity.User) userDetails;
-            claims.put("userId", user.getId());
+            claims.put("userId", user.getId().toString());
         }
         return createToken(claims, userDetails.getUsername(), expiration);
     }
@@ -61,12 +62,12 @@ public class JwtUtils {
         return extractClaim(token, Claims::getSubject);
     }
     
-    public Long extractUserId(String token) {
+    public UUID extractUserId(String token) {
         try {
             Claims claims = extractAllClaims(token);
             Object userIdObj = claims.get("userId");
-            if (userIdObj instanceof Number) {
-                return ((Number) userIdObj).longValue();
+            if (userIdObj instanceof String) {
+                return UUID.fromString((String) userIdObj);
             }
             return null;
         } catch (Exception e) {

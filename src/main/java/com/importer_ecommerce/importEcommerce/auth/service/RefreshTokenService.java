@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -29,11 +30,11 @@ public class RefreshTokenService {
     @Transactional
     public RefreshToken createRefreshToken(User user) {
         // Delete existing refresh token for user
-        refreshTokenRepository.deleteByUser(user);
+        refreshTokenRepository.deleteByUserId(user.getId());
         
         // Create new refresh token
         RefreshToken refreshToken = new RefreshToken();
-        refreshToken.setUser(user);
+        refreshToken.setUserId(user.getId());
         refreshToken.setToken(jwtUtils.generateRefreshToken(user));
         refreshToken.setExpiresAt(LocalDateTime.now().plusSeconds(refreshExpiration / 1000));
         
@@ -56,7 +57,7 @@ public class RefreshTokenService {
     
     @Transactional
     public void deleteByUser(User user) {
-        refreshTokenRepository.deleteByUser(user);
+        refreshTokenRepository.deleteByUserId(user.getId());
         log.info("Refresh tokens deleted for user: {}", user.getUsername());
     }
     
@@ -64,5 +65,11 @@ public class RefreshTokenService {
     public void deleteExpiredTokens() {
         refreshTokenRepository.deleteExpiredTokens();
         log.info("Expired refresh tokens cleaned up");
+    }
+
+    @Transactional
+    public void deleteByUserId(UUID userId) {
+        refreshTokenRepository.deleteByUserId(userId);
+        log.info("Refresh tokens deleted for user: {}", userId);
     }
 }

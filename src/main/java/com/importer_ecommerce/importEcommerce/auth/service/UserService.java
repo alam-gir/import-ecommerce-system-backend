@@ -6,7 +6,6 @@ import com.importer_ecommerce.importEcommerce.auth.entity.UserRole;
 import com.importer_ecommerce.importEcommerce.auth.entity.UserStatus;
 import com.importer_ecommerce.importEcommerce.auth.repository.CustomerProfileRepository;
 import com.importer_ecommerce.importEcommerce.auth.repository.UserRepository;
-import com.importer_ecommerce.importEcommerce.common.constants.ErrorCodes;
 import com.importer_ecommerce.importEcommerce.common.exception.BusinessException;
 import com.importer_ecommerce.importEcommerce.common.exception.NotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -27,8 +26,8 @@ import java.util.ArrayList;
 public class UserService implements UserDetailsService {
     
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
     private final CustomerProfileRepository customerProfileRepository;
+    private final PasswordEncoder passwordEncoder;
     
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -37,14 +36,16 @@ public class UserService implements UserDetailsService {
     }
     
     @Transactional
-    public User createCustomer(String mobileNumber, String fullName, String password) {
-        if (userRepository.existsByMobileNumber(mobileNumber)) {
-            throw new BusinessException("Mobile number already registered", ErrorCodes.DUPLICATE_RESOURCE);
+    public User createCustomer(String phoneNumber, String fullName, String password) {
+        // Check if user already exists
+        if (userRepository.existsByMobileNumber(phoneNumber)) {
+            throw new BusinessException("User with phone number already exists: " + phoneNumber, "DUPLICATE_PHONE");
         }
         
+        // Create user
         User user = new User();
-        user.setUsername(mobileNumber); // Use mobile as username for customers
-        user.setMobileNumber(mobileNumber);
+        user.setUsername(phoneNumber);
+        user.setMobileNumber(phoneNumber);
         user.setFullName(fullName);
         user.setPassword(passwordEncoder.encode(password));
         user.setRole(UserRole.CUSTOMER);
@@ -55,68 +56,59 @@ public class UserService implements UserDetailsService {
         // Create customer profile
         CustomerProfile profile = new CustomerProfile();
         profile.setUser(savedUser);
-        profile.setFullName(fullName);
         customerProfileRepository.save(profile);
         
-        log.info("Customer created with mobile number: {}", mobileNumber);
+        log.info("Customer created successfully: {}", phoneNumber);
         return savedUser;
     }
     
     @Transactional
-    public User createStaff(String username, String email, String password, String fullName, UserRole role) {
-        if (userRepository.existsByUsername(username)) {
-            throw new BusinessException("Username already exists", ErrorCodes.DUPLICATE_RESOURCE);
-        }
-        if (email != null && userRepository.existsByEmail(email)) {
-            throw new BusinessException("Email already registered", ErrorCodes.DUPLICATE_RESOURCE);
+    public User createStaff(String email, String fullName, String password) {
+        // Check if user already exists
+        if (userRepository.existsByEmail(email)) {
+            throw new BusinessException("User with email already exists: " + email, "DUPLICATE_EMAIL");
         }
         
+        // Create user
         User user = new User();
-        user.setUsername(username);
+        user.setUsername(email);
         user.setEmail(email);
         user.setFullName(fullName);
         user.setPassword(passwordEncoder.encode(password));
-        user.setRole(role);
+        user.setRole(UserRole.STAFF);
         user.setStatus(UserStatus.ACTIVE);
         
         User savedUser = userRepository.save(user);
-        log.info("Staff created with username: {}", username);
+        log.info("Staff created successfully: {}", email);
         return savedUser;
     }
     
     @Transactional
-    public void updateLastLogin(String username) {
-        userRepository.findByUsername(username).ifPresent(user -> {
-            user.setLastLoginAt(LocalDateTime.now());
-            userRepository.save(user);
-        });
+    public void updateLastLogin(UUID userId) {
+        User user = getUserById(userId);
+        user.setLastLogin(LocalDateTime.now());
+        userRepository.save(user);
     }
     
-    public User getUserById(Long id) {
-        return userRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("User", id.toString()));
+    public User getUserById(UUID userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User", userId.toString()));
     }
     
-    public User getUserByUsername(String username) {
-        return userRepository.findByUsername(username)
-                .orElseThrow(() -> new NotFoundException("User", username));
+    public CustomerProfile getCustomerProfile(UUID userId) {
+        User user = getUserById(userId);
+        return customerProfileRepository.findByUser(user)
+                .orElseThrow(() -> new NotFoundException("Customer Profile", userId.toString()));
     }
     
     @Transactional
-    public CustomerProfile updateCustomerProfile(Long userId, String fullName) {
+    public CustomerProfile updateCustomerProfile(UUID userId, String fullName) {
         User user = getUserById(userId);
-        if (user.getRole() != UserRole.CUSTOMER) {
-            throw new BusinessException("Only customers can update profile", ErrorCodes.INVALID_OPERATION);
-        }
+        user.setFullName(fullName);
+        userRepository.save(user);
         
-        CustomerProfile profile = customerProfileRepository.findByUser(user)
-                .orElseThrow(() -> new NotFoundException("Customer Profile", userId.toString()));
-        
-        profile.setFullName(fullName);
-        
-        CustomerProfile savedProfile = customerProfileRepository.save(profile);
-        log.info("Customer profile updated for user: {}", userId);
-        return savedProfile;
+        CustomerProfile profile = getCustomerProfile(userId);
+        return profile;
     }
     
     @Transactional
@@ -124,51 +116,24 @@ public class UserService implements UserDetailsService {
         return customerProfileRepository.save(profile);
     }
     
-    public CustomerProfile getCustomerProfile(Long userId) {
-        User user = getUserById(userId);
-        if (user.getRole() != UserRole.CUSTOMER) {
-            throw new BusinessException("Only customers can access profile", ErrorCodes.INVALID_OPERATION);
-        }
-        
-        return customerProfileRepository.findByUser(user)
-                .orElseThrow(() -> new NotFoundException("Customer Profile", userId.toString()));
+    @Transactional
+    public CustomerProfile updateCustomerEmail(UUID userId, String email) {
+        CustomerProfile profile = getCustomerProfile(userId);
+        profile.setEmail(email);
+        profile.setEmailVerified(false);
+        return customerProfileRepository.save(profile);
     }
     
     @Transactional
-    public void changePassword(Long userId, String currentPassword, String newPassword) {
+    public void changePassword(UUID userId, String currentPassword, String newPassword) {
         User user = getUserById(userId);
         
         if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
-            throw new BusinessException("Current password is incorrect", ErrorCodes.INVALID_CREDENTIALS);
+            throw new BusinessException("Current password is incorrect", "INVALID_PASSWORD");
         }
         
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
-        log.info("Password changed for user: {}", userId);
-    }
-    
-    @Transactional
-    public CustomerProfile updateCustomerEmail(Long userId, String email) {
-        User user = getUserById(userId);
-        if (user.getRole() != UserRole.CUSTOMER) {
-            throw new BusinessException("Only customers can update email", ErrorCodes.INVALID_OPERATION);
-        }
-        
-        CustomerProfile profile = customerProfileRepository.findByUser(user)
-                .orElseThrow(() -> new NotFoundException("Customer Profile", userId.toString()));
-        
-        // Check if email is already used by another user
-        if (email != null && !email.equals(profile.getEmail())) {
-            if (customerProfileRepository.existsByEmail(email)) {
-                throw new BusinessException("Email already registered by another user", ErrorCodes.DUPLICATE_RESOURCE);
-            }
-            profile.setEmailVerified(false); // Reset email verification when email changes
-        }
-        
-        profile.setEmail(email);
-        CustomerProfile savedProfile = customerProfileRepository.save(profile);
-        log.info("Customer email updated for user: {}", userId);
-        return savedProfile;
     }
     
     @Transactional
