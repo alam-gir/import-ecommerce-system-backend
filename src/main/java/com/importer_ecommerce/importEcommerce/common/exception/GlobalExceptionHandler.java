@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.OptimisticLockingFailureException;
@@ -115,11 +116,27 @@ public class GlobalExceptionHandler {
 
         ApiResponse<Void> response = ApiResponse.error(
                 String.format("HTTP method '%s' is not supported for this endpoint", ex.getMethod()),
-                "METHOD_NOT_SUPPORTED",
+                ErrorCodes.METHOD_NOT_ALLOWED,
                 request.getRequestURI()
         );
 
         return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(response);
+    }
+
+    @ExceptionHandler(NoHandlerFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleNoHandlerFoundException(
+            NoHandlerFoundException ex, HttpServletRequest request) {
+
+        log.warn("No handler found for {} {} - {}", 
+                ex.getHttpMethod(), request.getRequestURI(), ex.getMessage());
+
+        ApiResponse<Void> response = ApiResponse.error(
+                "Endpoint not found",
+                ErrorCodes.NOT_FOUND,
+                request.getRequestURI()
+        );
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
 
     @ExceptionHandler(AccessDeniedException.class)

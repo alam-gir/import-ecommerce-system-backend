@@ -1,10 +1,12 @@
 package com.importer_ecommerce.importEcommerce.auth.dto;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.Builder;
 import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class LoginResponse {

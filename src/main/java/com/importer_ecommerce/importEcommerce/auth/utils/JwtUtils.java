@@ -33,6 +33,11 @@ public class JwtUtils {
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("role", userDetails.getAuthorities().iterator().next().getAuthority());
+        // Add user ID to claims if available
+        if (userDetails instanceof com.importer_ecommerce.importEcommerce.auth.entity.User) {
+            com.importer_ecommerce.importEcommerce.auth.entity.User user = (com.importer_ecommerce.importEcommerce.auth.entity.User) userDetails;
+            claims.put("userId", user.getId());
+        }
         return createToken(claims, userDetails.getUsername(), expiration);
     }
     
@@ -54,6 +59,20 @@ public class JwtUtils {
     
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
+    }
+    
+    public Long extractUserId(String token) {
+        try {
+            Claims claims = extractAllClaims(token);
+            Object userIdObj = claims.get("userId");
+            if (userIdObj instanceof Number) {
+                return ((Number) userIdObj).longValue();
+            }
+            return null;
+        } catch (Exception e) {
+            log.error("Error extracting user ID from token: {}", e.getMessage());
+            return null;
+        }
     }
     
     public Date extractExpiration(String token) {

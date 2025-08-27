@@ -24,6 +24,11 @@ public final class ErrorCodes {
     public static final String DATABASE_ERROR = "SYS_002";
     public static final String EXTERNAL_SERVICE_ERROR = "SYS_003";
     public static final String RATE_LIMIT_EXCEEDED = "SYS_004";
+    
+    // HTTP Errors
+    public static final String NOT_FOUND = "HTTP_001";
+    public static final String METHOD_NOT_ALLOWED = "HTTP_002";
+    public static final String INVALID_REQUEST = "HTTP_003";
 
     private ErrorCodes() {} // Prevent instantiation
 }
