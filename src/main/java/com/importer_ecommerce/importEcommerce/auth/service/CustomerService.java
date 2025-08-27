@@ -46,7 +46,8 @@ public class CustomerService {
     public CustomerProfile updateProfile(UUID userId, ProfileUpdateRequest request) {
         CustomerProfile profile = userService.updateCustomerProfile(
             userId, 
-            request.getFullName()
+            request.getFullName(),
+            request.getPhoneNumber()
         );
         
         // Update additional profile fields

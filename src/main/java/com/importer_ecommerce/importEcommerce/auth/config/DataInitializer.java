@@ -1,7 +1,5 @@
 package com.importer_ecommerce.importEcommerce.auth.config;
 
-import com.importer_ecommerce.importEcommerce.auth.entity.User;
-import com.importer_ecommerce.importEcommerce.auth.entity.UserRole;
 import com.importer_ecommerce.importEcommerce.auth.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

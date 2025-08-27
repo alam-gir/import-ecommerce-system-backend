@@ -102,9 +102,18 @@ public class UserService implements UserDetailsService {
     }
     
     @Transactional
-    public CustomerProfile updateCustomerProfile(UUID userId, String fullName) {
+    public CustomerProfile updateCustomerProfile(UUID userId, String fullName, String phoneNumber) {
         User user = getUserById(userId);
+        
+        // Check if phone number is already used by another user
+        if (!phoneNumber.equals(user.getMobileNumber()) && userRepository.existsByMobileNumber(phoneNumber)) {
+            throw new BusinessException("Phone number already registered by another user", "DUPLICATE_PHONE");
+        }
+        
+        // Update user fields
         user.setFullName(fullName);
+        user.setMobileNumber(phoneNumber);
+        user.setUsername(phoneNumber); // Update username to match phone number for customers
         userRepository.save(user);
         
         CustomerProfile profile = getCustomerProfile(userId);
