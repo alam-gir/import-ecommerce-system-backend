@@ -1,208 +1,139 @@
 # Product Module
 
-This module contains all product-related functionality including categories and products.
+This module handles product management with support for variants, categories, and media files.
 
-## Category Module
+## Entity Structure
 
-The category module provides complete CRUD operations for product categories with hierarchical support and image handling.
+### Product
+- **Basic Info**: title, slug, description (HTML), note, brand
+- **Media**: mediaDescriptions (List of image URLs from cloud storage)
+- **Flexible Data**: attributes (JSON), SEO fields
+- **Status**: draft, published, archived, deleted
+- **Features**: featured, categories (many-to-many)
 
-### Features
+### ProductVariant
+- **Pricing**: price, compareAtPrice, costPrice
+- **Attributes**: JSON for color, size, material, etc.
+- **Inventory**: quantity, tracking, low stock threshold
+- **Physical**: weight, dimensions (JSON)
+- **Status**: active/inactive
 
-- **Create Category**: Add new categories with title, description, profile image, cover image, and optional parent
-- **Read Categories**: Get single category, paginated list, root categories, or children categories
-- **Update Category**: Modify existing category information, images, and parent relationships
-- **Delete Category**: Remove categories and associated images (admin only, no children allowed)
-- **Search Categories**: Search by title or description
-- **Hierarchical Structure**: Support for parent-child category relationships
-- **Image Support**: Profile picture and cover image uploads via multipart form data
+## Key Features
 
-### API Endpoints
+### Media Management
+- Images are uploaded to Cloudflare R2 storage in the `products/` folder
+- `mediaDescriptions` stores a list of image URLs
+- Supports multiple images per product
+- Automatic file upload during product creation/update
+- **Post-creation media management**: Add/remove media after product creation
+- **Bulk operations**: Add/delete multiple media files at once
+- **Cloud storage cleanup**: Automatic deletion from cloud storage when removing media
+- **Frontend integration**: Always uses MultipartFile through form data (same as category system)
 
-#### Create Category
-```
-POST /categories
-Authorization: Bearer <token> (STAFF, ADMIN, SUPER_ADMIN)
-Content-Type: multipart/form-data
+### Category Integration
+- Direct many-to-many relationship with categories
+- No junction table needed
+- Products can belong to multiple categories
+- Uses `ProductCategoryResponse` (separate from main category system)
 
-Form Data:
-- title: "Electronics" (required)
-- description: "Electronic devices and gadgets" (optional)
-- profileImage: [file] (optional)
-- coverImage: [file] (optional)
-- parentId: "uuid" (optional - for subcategories)
-```
+### Inventory Strategy
+- **Variant-level inventory**: Each variant has its own stock quantity
+- Better accuracy for e-commerce operations
+- Supports different inventory tracking modes
 
-#### Get Category by ID
-```
-GET /categories/{id}
-Authorization: None (public)
-```
+## API Endpoints
 
-#### Get All Categories
-```
-GET /categories?page=0&size=10
-Authorization: None (public)
-```
+### Product Management
+- `POST /products` - Create product (multipart form data)
+- `PUT /products/{id}` - Update product (multipart form data)
+- `GET /products/{id}` - Get product by ID
+- `GET /products/slug/{slug}` - Get product by slug
+- `DELETE /products/{id}` - Delete product
+- `PATCH /products/{id}/status` - Update product status
 
-#### Get Root Categories (No Parent)
-```
-GET /categories/root
-Authorization: None (public)
-```
+### Product Listing
+- `GET /products` - Get all products (paginated)
+- `GET /products/status/{status}` - Get products by status
+- `GET /products/search?query={query}` - Search products
+- `GET /products/category/{categoryId}` - Get products by category
+- `GET /products/featured` - Get featured products
 
-#### Get Children Categories
-```
-GET /categories/{parentId}/children
-Authorization: None (public)
-```
+### Media Management
+- `POST /products/{id}/media` - Add media files to product (multipart form data)
+- `DELETE /products/{id}/media` - Delete media from product (JSON array of URLs)
 
-#### Search Categories
-```
-GET /categories/search?q=electronics&page=0&size=10
-Authorization: None (public)
-```
+## Usage Examples
 
-#### Update Category
-```
-PUT /categories/{id}
-Authorization: Bearer <token> (STAFF, ADMIN, SUPER_ADMIN)
-Content-Type: multipart/form-data
-
-Form Data:
-- title: "Updated Electronics" (optional)
-- description: "Updated description" (optional)
-- profileImage: [file] (optional)
-- coverImage: [file] (optional)
-- parentId: "uuid" (optional - can change parent)
-```
-
-#### Delete Category
-```
-DELETE /categories/{id}
-Authorization: Bearer <token> (ADMIN, SUPER_ADMIN)
+### Creating a Product
+```bash
+curl -X POST /products \
+  -F "title=Sample Product" \
+  -F "slug=sample-product" \
+  -F "description=<p>Product description</p>" \
+  -F "brand=Nike" \
+  -F "status=PUBLISHED" \
+  -F "categoryIds=uuid1,uuid2" \
+  -F "mediaFiles=@image1.jpg" \
+  -F "mediaFiles=@image2.jpg"
 ```
 
-### Entity Structure
-
-```java
-Category {
-    id: UUID (auto-generated)
-    title: String (required, unique at same level)
-    description: String (optional)
-    profilePicture: String (optional, URL)
-    coverImage: String (optional, URL)
-    parent: Category (optional - for hierarchical structure)
-    children: List<Category> (auto-populated)
-    createdAt: LocalDateTime (auto-generated)
-    updatedAt: LocalDateTime (auto-updated)
-}
+### Adding Media After Creation
+```bash
+# Add new media files (same pattern as category)
+curl -X POST /products/{id}/media \
+  -F "mediaFiles=@new-image1.jpg" \
+  -F "mediaFiles=@new-image2.jpg"
 ```
 
-### Hierarchical Structure
-
-Categories now support a tree-like structure:
-
-```
-Electronics (root)
-├── Computers
-│   ├── Laptops
-│   └── Desktops
-├── Phones
-│   ├── Smartphones
-│   └── Feature Phones
-└── Accessories
-    ├── Cables
-    └── Cases
-
-Clothing (root)
-├── Men
-├── Women
-└── Kids
+### Deleting Media
+```bash
+curl -X DELETE /products/{id}/media \
+  -H "Content-Type: application/json" \
+  -d '["https://example.com/image1.jpg", "https://example.com/image2.jpg"]'
 ```
 
-### Security
+## DTOs
 
-- **Public Access**: Read operations (get, search, list, root, children)
-- **Staff+ Access**: Create and update operations
-- **Admin+ Access**: Delete operations
+### Request DTOs (Classes)
+- `CreateProductRequest` - For product creation
+- `UpdateProductRequest` - For product updates
 
-### Image Handling
+### Response DTOs (Records)
+- `ProductResponse` - Single product data
+- `ProductListResponse` - Paginated product list
+- `ProductCategoryResponse` - Category data for products (separate from main category system)
 
-The category module supports image uploads through multipart form data:
+## Business Rules
 
-- **Profile Image**: Small image for category representation
-- **Cover Image**: Larger image for category banners
-- **Automatic Cleanup**: Old images are deleted when updated
-- **Error Handling**: Image upload failures don't block category operations
-- **Cloud Storage**: Images are stored in the "categories" folder
+1. **Slug Uniqueness**: Product slugs must be unique
+2. **Media Upload**: Images are automatically uploaded to cloud storage
+3. **Category Assignment**: Products can have multiple categories
+4. **Status Management**: Products have draft, published, archived, deleted states
+5. **Inventory Tracking**: Variant-level inventory management
+6. **Media Management**: 
+   - Can add/remove media after product creation
+   - Deleting media removes files from cloud storage
+   - Supports bulk operations for efficiency
+   - Frontend always sends MultipartFile through form data
 
-### Business Rules
+## Dependencies
 
-- **Title Uniqueness**: Category titles must be unique at the same level (siblings)
-- **Parent Validation**: Parent category must exist and not create circular references
-- **Deletion Protection**: Categories with children cannot be deleted
-- **Circular Prevention**: A category cannot be its own parent or descendant
+- **CloudflareR2Service**: For media file uploads and deletions
+- **CategoryRepository**: For category lookups
+- **ProductMapper**: For entity-DTO conversion
+- **Spring Security**: For role-based access control (ADMIN role required for mutations)
 
-### Frontend Integration
+## Media Management Features
 
-```javascript
-// Example frontend form submission for category with parent
-const formData = new FormData();
-formData.append('title', 'Laptops');
-formData.append('description', 'Portable computers');
-formData.append('parentId', 'electronics-category-uuid');
-formData.append('profileImage', profileFile);
-formData.append('coverImage', coverFile);
+### Efficient Operations
+- **Bulk Add**: Upload multiple files at once through form data
+- **Bulk Delete**: Remove multiple media files simultaneously
+- **Cloud Storage Integration**: Automatic cleanup when deleting media
+- **Post-Creation Support**: Add media without recreating the entire product
 
-fetch('/categories', {
-    method: 'POST',
-    headers: { 'Authorization': 'Bearer ' + token },
-    body: formData
-});
-
-// Get root categories for main navigation
-fetch('/categories/root')
-    .then(response => response.json())
-    .then(data => {
-        // Display main category navigation
-        displayMainCategories(data.data.categories);
-    });
-
-// Get subcategories when user clicks on main category
-fetch(`/categories/${categoryId}/children`)
-    .then(response => response.json())
-    .then(data => {
-        // Display subcategory navigation
-        displaySubCategories(data.data.categories);
-    });
-```
-
-### Usage Example
-
-```java
-@Service
-public class ProductService {
-    
-    private final CategoryService categoryService;
-    
-    public Product createProduct(CreateProductRequest request) {
-        // Verify category exists
-        CategoryResponse category = categoryService.getCategoryById(request.getCategoryId());
-        
-        // Create product with category
-        Product product = new Product();
-        product.setName(request.getName());
-        product.setCategoryId(category.id());
-        // ... other fields
-        
-        return productRepository.save(product);
-    }
-}
-```
-
-## Next Steps
-
-- Product entity and CRUD operations
-- Product-Category relationships
-- Product image handling
-- Product search and filtering
+### File Handling
+- Files are uploaded to `products/` folder in cloud storage
+- Automatic URL generation and storage
+- Error handling for failed uploads/deletions
+- Logging for debugging and monitoring
+- **Frontend Integration**: Consistent with category system - always MultipartFile through form data
