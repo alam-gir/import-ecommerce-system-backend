@@ -141,7 +141,28 @@ public class CloudflareR2ServiceImpl implements CloudflareR2Service {
     }
     
     private String getFileUrl(String bucketPath) {
-        return config.getPublicUrl() + "/" + bucketPath;
+        String publicUrl = config.getPublicUrl();
+        
+        // Validate that public URL is configured
+        if (publicUrl == null || publicUrl.trim().isEmpty()) {
+            log.error("Cloudflare R2 public URL is not configured! Please set cloudflare.r2.public-url in application.properties");
+            throw new RuntimeException("Cloudflare R2 public URL is not configured. Please check your configuration.");
+        }
+        
+        // Ensure public URL doesn't end with slash
+        if (publicUrl.endsWith("/")) {
+            publicUrl = publicUrl.substring(0, publicUrl.length() - 1);
+        }
+        
+        // Ensure bucket path doesn't start with slash
+        if (bucketPath.startsWith("/")) {
+            bucketPath = bucketPath.substring(1);
+        }
+        
+        String fullUrl = publicUrl + "/" + bucketPath;
+        log.info("Constructing file URL: {} + {} = {}", publicUrl, bucketPath, fullUrl);
+        
+        return fullUrl;
     }
     
     private String extractBucketPathFromUrl(String fileUrl) {
