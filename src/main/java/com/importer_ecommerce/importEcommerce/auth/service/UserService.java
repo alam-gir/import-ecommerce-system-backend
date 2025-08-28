@@ -63,6 +63,52 @@ public class UserService implements UserDetailsService {
     }
     
     @Transactional
+    public User createAdmin(String email, String fullName, String password) {
+        // Check if user already exists
+        if (userRepository.existsByEmail(email)) {
+            throw new BusinessException("User with email already exists: " + email, "DUPLICATE_EMAIL");
+        }
+        
+        // Create user
+        User user = new User();
+        user.setUsername(email);
+        user.setEmail(email);
+        user.setFullName(fullName);
+        user.setPassword(passwordEncoder.encode(password));
+        user.setRole(UserRole.ADMIN);
+        user.setStatus(UserStatus.ACTIVE);
+        // Set a dummy mobile number for admin users (required by database constraint)
+        user.setMobileNumber("ADMIN-" + email.hashCode());
+        
+        User savedUser = userRepository.save(user);
+        log.info("Admin created successfully: {}", email);
+        return savedUser;
+    }
+    
+    @Transactional
+    public User createSuperAdmin(String email, String fullName, String password) {
+        // Check if user already exists
+        if (userRepository.existsByEmail(email)) {
+            throw new BusinessException("User with email already exists: " + email, "DUPLICATE_EMAIL");
+        }
+        
+        // Create user
+        User user = new User();
+        user.setUsername(email);
+        user.setEmail(email);
+        user.setFullName(fullName);
+        user.setPassword(passwordEncoder.encode(password));
+        user.setRole(UserRole.SUPER_ADMIN);
+        user.setStatus(UserStatus.ACTIVE);
+        // Set a dummy mobile number for super admin users (required by database constraint)
+        user.setMobileNumber("SUPER-" + email.hashCode());
+        
+        User savedUser = userRepository.save(user);
+        log.info("Super Admin created successfully: {}", email);
+        return savedUser;
+    }
+    
+    @Transactional
     public User createStaff(String email, String fullName, String password) {
         // Check if user already exists
         if (userRepository.existsByEmail(email)) {
@@ -77,6 +123,8 @@ public class UserService implements UserDetailsService {
         user.setPassword(passwordEncoder.encode(password));
         user.setRole(UserRole.STAFF);
         user.setStatus(UserStatus.ACTIVE);
+        // Set a dummy mobile number for staff users (required by database constraint)
+        user.setMobileNumber("STAFF-" + email.hashCode());
         
         User savedUser = userRepository.save(user);
         log.info("Staff created successfully: {}", email);

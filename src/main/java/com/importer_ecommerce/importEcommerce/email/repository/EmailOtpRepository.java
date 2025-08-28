@@ -8,9 +8,10 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
-public interface EmailOtpRepository extends JpaRepository<EmailOtp, Long> {
+public interface EmailOtpRepository extends JpaRepository<EmailOtp, UUID> {
     
     Optional<EmailOtp> findByEmailAndOtpAndPurposeAndUsedFalse(String email, String otp, EmailOtp.OtpPurpose purpose);
     
