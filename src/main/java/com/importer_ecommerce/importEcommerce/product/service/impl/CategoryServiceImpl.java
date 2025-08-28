@@ -55,11 +55,6 @@ public class CategoryServiceImpl implements CategoryService {
             Category parent = categoryRepository.findById(request.getParentId())
                 .orElseThrow(() -> new NotFoundException("Parent Category", request.getParentId().toString()));
             
-            // Prevent circular reference
-            if (parent.getId().equals(request.getParentId())) {
-                throw new ConflictException("Category cannot be its own parent");
-            }
-            
             category.setParent(parent);
         }
         

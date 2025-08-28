@@ -131,6 +131,7 @@ public class CloudflareR2ServiceImpl implements CloudflareR2Service {
     }
     
     private void uploadToR2(String bucketPath, MultipartFile file) throws IOException {
+        
         PutObjectRequest putRequest = PutObjectRequest.builder()
                 .bucket(config.getBucketName())
                 .key(bucketPath)
@@ -138,6 +139,9 @@ public class CloudflareR2ServiceImpl implements CloudflareR2Service {
                 .build();
         
         s3Client.putObject(putRequest, RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
+        
+        log.info("File uploaded successfully to R2 - Bucket: {}, Path: {}", 
+                config.getBucketName(), bucketPath);
     }
     
     private String getFileUrl(String bucketPath) {
