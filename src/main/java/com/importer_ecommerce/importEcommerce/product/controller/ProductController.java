@@ -2,6 +2,7 @@ package com.importer_ecommerce.importEcommerce.product.controller;
 
 import com.importer_ecommerce.importEcommerce.common.utils.ApiResponse;
 import com.importer_ecommerce.importEcommerce.product.dto.request.CreateProductRequest;
+import com.importer_ecommerce.importEcommerce.product.dto.request.DeleteProductMediaRequest;
 import com.importer_ecommerce.importEcommerce.product.dto.request.UpdateProductRequest;
 import com.importer_ecommerce.importEcommerce.product.dto.response.ProductListResponse;
 import com.importer_ecommerce.importEcommerce.product.dto.response.ProductResponse;
@@ -145,9 +146,9 @@ public class ProductController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<ProductResponse>> deleteProductMedia(
             @PathVariable UUID id,
-            @RequestBody List<String> mediaUrls) {
+            @Valid @RequestBody DeleteProductMediaRequest request) {
         
-        ProductResponse product = productService.deleteProductMedia(id, mediaUrls);
+        ProductResponse product = productService.deleteProductMedia(id, request.getMediaUrls());
         return ResponseEntity.ok(ApiResponse.success(product, "Product media deleted successfully"));
     }
 }
