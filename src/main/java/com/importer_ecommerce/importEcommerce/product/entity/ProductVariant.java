@@ -7,6 +7,8 @@ import lombok.AllArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -27,8 +29,8 @@ public class ProductVariant {
     @Column(name = "sku", unique = true)
     private String sku;
     
-    @Column(name = "name")
-    private String name; // e.g., "Red, Size 10"
+    @Column(name = "title")
+    private String title; // e.g., "Red, Size 10"
     
     @Column(name = "attributes", columnDefinition = "TEXT")
     private String attributes; // JSON object for variant attributes like color, size, etc.
@@ -57,6 +59,11 @@ public class ProductVariant {
     
     @Column(name = "low_stock_threshold")
     private Integer lowStockThreshold = 5;
+    
+    @ElementCollection
+    @CollectionTable(name = "product_variant_images", joinColumns = @JoinColumn(name = "variant_id"))
+    @Column(name = "image_url")
+    private List<String> images = new ArrayList<>();
     
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
