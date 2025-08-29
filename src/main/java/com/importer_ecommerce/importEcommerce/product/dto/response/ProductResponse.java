@@ -15,6 +15,7 @@ public record ProductResponse(
     List<String> mediaDescriptions,
     String note,
     String brand,
+    Integer minOrderQuantity,
     String attributes,
     ProductStatus status,
     Boolean featured,

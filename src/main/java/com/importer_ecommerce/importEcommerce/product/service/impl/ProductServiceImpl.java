@@ -50,6 +50,7 @@ public class ProductServiceImpl implements ProductService {
         product.setDescription(request.getDescription());
         product.setNote(request.getNote());
         product.setBrand(request.getBrand());
+        product.setMinOrderQuantity(request.getMinOrderQuantity());
         product.setAttributes(request.getAttributes());
         product.setStatus(request.getStatus());
         product.setFeatured(request.getFeatured());
@@ -84,6 +85,9 @@ public class ProductServiceImpl implements ProductService {
         product.setDescription(request.getDescription());
         product.setNote(request.getNote());
         product.setBrand(request.getBrand());
+        if (request.getMinOrderQuantity() != null) {
+            product.setMinOrderQuantity(request.getMinOrderQuantity());
+        }
         product.setAttributes(request.getAttributes());
         
         if (request.getStatus() != null) {

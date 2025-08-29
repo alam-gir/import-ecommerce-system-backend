@@ -6,6 +6,7 @@ import static com.importer_ecommerce.importEcommerce.product.entity.Product.Prod
 
 import java.util.List;
 import java.util.UUID;
+import jakarta.validation.constraints.Min;
 
 @Data
 public class UpdateProductRequest {
@@ -21,6 +22,9 @@ public class UpdateProductRequest {
     private String note;
     
     private String brand;
+    
+    @Min(value = 1, message = "Minimum order quantity must be at least 1")
+    private Integer minOrderQuantity; // Optional for updates
     
     private String attributes; // JSON string
     

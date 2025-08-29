@@ -40,6 +40,9 @@ public class Product {
     @Column(name = "brand")
     private String brand;
     
+    @Column(name = "min_order_quantity", nullable = false)
+    private Integer minOrderQuantity = 1; // Default minimum order quantity
+    
     @Column(name = "attributes", columnDefinition = "TEXT")
     private String attributes; // JSON object for flexible fields
     

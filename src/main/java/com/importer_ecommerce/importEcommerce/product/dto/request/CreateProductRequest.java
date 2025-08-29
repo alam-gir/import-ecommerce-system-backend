@@ -8,6 +8,7 @@ import static com.importer_ecommerce.importEcommerce.product.entity.Product.Prod
 
 import java.util.List;
 import java.util.UUID;
+import jakarta.validation.constraints.Min;
 
 @Data
 public class CreateProductRequest {
@@ -38,4 +39,8 @@ public class CreateProductRequest {
     private String seoKeywords;
     
     private List<UUID> categoryIds;
+
+    @NotNull(message = "Minimum order quantity is required")
+    @Min(value = 1, message = "Minimum order quantity must be at least 1")
+    private Integer minOrderQuantity = 1; // Default to 1 if not specified
 }

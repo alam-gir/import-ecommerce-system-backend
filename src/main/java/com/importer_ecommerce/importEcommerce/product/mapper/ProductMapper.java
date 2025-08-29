@@ -28,6 +28,7 @@ public class ProductMapper {
             product.getMediaDescriptions(),
             product.getNote(),
             product.getBrand(),
+            product.getMinOrderQuantity(),
             product.getAttributes(),
             product.getStatus(),
             product.getFeatured(),
