@@ -1,0 +1,40 @@
+package com.importer_ecommerce.importEcommerce.auth.security;
+
+import com.importer_ecommerce.importEcommerce.user.entity.User;
+import com.importer_ecommerce.importEcommerce.user.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+
+import java.util.Collections;
+
+/**
+ * Custom user details service for Spring Security
+ */
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class CustomUserDetailsService implements UserDetailsService {
+    
+    private final UserRepository userRepository;
+    
+    @Override
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        User user = userRepository.findByEmail(email)
+            .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
+        
+        return org.springframework.security.core.userdetails.User.builder()
+            .username(user.getEmail())
+            .password("") // No password for OTP-based authentication
+            .authorities(Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + user.getRole().name())))
+            .accountExpired(false)
+            .accountLocked(!user.isActive())
+            .credentialsExpired(false)
+            .disabled(!user.isActive())
+            .build();
+    }
+}

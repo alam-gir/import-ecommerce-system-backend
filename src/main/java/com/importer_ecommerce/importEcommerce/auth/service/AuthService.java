@@ -1,92 +1,220 @@
 package com.importer_ecommerce.importEcommerce.auth.service;
 
-import com.importer_ecommerce.importEcommerce.auth.dto.LoginRequest;
-import com.importer_ecommerce.importEcommerce.auth.dto.LoginResponse;
+import com.importer_ecommerce.importEcommerce.auth.dto.response.LoginResponse;
+import com.importer_ecommerce.importEcommerce.auth.dto.response.OtpResponse;
 import com.importer_ecommerce.importEcommerce.auth.entity.RefreshToken;
-import com.importer_ecommerce.importEcommerce.auth.entity.User;
-import com.importer_ecommerce.importEcommerce.auth.utils.JwtUtils;
-import com.importer_ecommerce.importEcommerce.common.exception.BusinessException;
-import com.importer_ecommerce.importEcommerce.common.constants.ErrorCodes;
+import com.importer_ecommerce.importEcommerce.auth.mapper.AuthMapper;
+import com.importer_ecommerce.importEcommerce.common.util.CookieUtil;
+import com.importer_ecommerce.importEcommerce.email.service.EmailService;
+import com.importer_ecommerce.importEcommerce.user.entity.User;
+import com.importer_ecommerce.importEcommerce.user.repository.UserRepository;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
+
+/**
+ * Authentication service for handling login, OTP, and token management
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class AuthService {
     
-    private final AuthenticationManager authenticationManager;
-    private final UserService userService;
+    private final UserRepository userRepository;
+    private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
-    private final JwtUtils jwtUtils;
+    private final OtpService otpService;
+    private final EmailService emailService;
+    private final AuthMapper authMapper;
+    private final CookieUtil cookieUtil;
     
-    public LoginResponse login(LoginRequest request) {
-        try {
-            // Try to authenticate with username first (for staff)
-            Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
-            );
-            
-            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            User user = (User) userDetails;
-            
-            // Update last login
-            userService.updateLastLogin(user.getId());
-            
-            // Generate tokens
-            String accessToken = jwtUtils.generateToken(userDetails);
-            RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
-            
-            log.info("User logged in successfully: {}", user.getUsername());
-            
-            return new LoginResponse(
-                accessToken,
-                refreshToken.getToken(),
-                "Bearer",
-                jwtUtils.extractExpiration(accessToken).getTime() - System.currentTimeMillis(),
-                user.getUsername(),
-                user.getRole().name()
-            );
-            
-        } catch (Exception e) {
-            log.error("Login failed for user: {}", request.getUsername());
-            throw new BusinessException("Invalid credentials", ErrorCodes.INVALID_CREDENTIALS);
+    /**
+     * Send OTP to user email
+     */
+    @Transactional
+    public OtpResponse sendOtp(String email, String deviceId) {
+        // Find user by email
+        User user = userRepository.findByEmail(email)
+            .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + email));
+        
+        // Check if user is admin
+        if (!user.isAdmin()) {
+            throw new IllegalArgumentException("Access denied. Admin privileges required.");
         }
+        
+        // Check if user is active
+        if (!user.isActive()) {
+            throw new IllegalArgumentException("Account is inactive. Please contact support.");
+        }
+        
+        // Generate and store OTP
+        String otp = otpService.generateAndStoreOtp(email, deviceId);
+        
+        // Send OTP email asynchronously
+        String recipientName = user.getName() != null ? user.getName() : "Admin";
+        emailService.sendOtpEmailAsync(email, recipientName, otp);
+        
+        log.info("OTP sent to admin email: {}", email);
+        
+        LocalDateTime expiresAt = otpService.getOtpExpiryTime(email, deviceId);
+        return authMapper.toOtpResponse("OTP sent successfully to your email", expiresAt);
     }
     
-    public LoginResponse refreshToken(String refreshToken) {
-        RefreshToken token = refreshTokenService.findByToken(refreshToken)
-            .orElseThrow(() -> new BusinessException("Refresh token not found", ErrorCodes.TOKEN_INVALID));
+    /**
+     * Verify OTP and login user
+     */
+    @Transactional
+    public LoginResponse verifyOtp(String email, String otp, String deviceId, HttpServletResponse response) {
+        // Find user by email
+        User user = userRepository.findByEmail(email)
+            .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + email));
         
-        // Verify expiration
-        token = refreshTokenService.verifyExpiration(token);
+        // Check if user is admin
+        if (!user.isAdmin()) {
+            throw new IllegalArgumentException("Access denied. Admin privileges required.");
+        }
+        
+        // Check if user is active
+        if (!user.isActive()) {
+            throw new IllegalArgumentException("Account is inactive. Please contact support.");
+        }
+        
+        // Verify OTP
+        if (!otpService.verifyOtp(email, deviceId, otp)) {
+            throw new IllegalArgumentException("Invalid or expired OTP");
+        }
+        
+        // Generate tokens
+        String accessToken = jwtService.generateAccessToken(user);
+        
+        // Create refresh token entity
+        RefreshToken refreshTokenEntity = refreshTokenService.createRefreshToken(user, deviceId);
+        
+        // Set cookies
+        Duration accessTokenDuration = Duration.ofMinutes(15); // 15 minutes
+        Duration refreshTokenDuration = Duration.ofDays(7); // 7 days
+        
+        cookieUtil.addCookiesToResponse(response,
+            cookieUtil.createAccessTokenCookie(accessToken, accessTokenDuration),
+            cookieUtil.createRefreshTokenCookie(refreshTokenEntity.getToken(), refreshTokenDuration)
+        );
+        
+        log.info("Admin logged in successfully: {}", email);
+        
+        LocalDateTime expiresAt = jwtService.getAccessTokenExpirationTime();
+        return authMapper.toLoginResponse(accessToken, refreshTokenEntity.getToken(), user, expiresAt);
+    }
+    
+    /**
+     * Get current OTP for testing (DEV ONLY)
+     */
+    public String getCurrentOtpForTesting(String email, String deviceId) {
+        // This is a test method - in production, remove this
+        return otpService.getCurrentOtpForTesting(email, deviceId);
+    }
+    
+    /**
+     * Refresh access token
+     */
+    @Transactional
+    public LoginResponse refreshToken(String refreshToken, String deviceId, HttpServletResponse response) {
+        // Validate refresh token
+        if (!refreshTokenService.validateRefreshToken(refreshToken)) {
+            throw new IllegalArgumentException("Invalid or expired refresh token");
+        }
+        
+        // Get user from refresh token
+        User user = refreshTokenService.getUserFromToken(refreshToken)
+            .orElseThrow(() -> new IllegalArgumentException("User not found for refresh token"));
+        
+        // Check if user is active
+        if (!user.isActive()) {
+            throw new IllegalArgumentException("Account is inactive. Please contact support.");
+        }
+        
+        // Rotate refresh token (create new one and delete old one)
+        RefreshToken newRefreshToken = refreshTokenService.rotateRefreshToken(refreshToken, deviceId);
         
         // Generate new access token
-        User user = userService.getUserById(token.getUserId());
-        String newAccessToken = jwtUtils.generateToken(user);
+        String newAccessToken = jwtService.generateAccessToken(user);
         
-        log.info("Token refreshed for user: {}", user.getUsername());
+        // Set cookies
+        Duration accessTokenDuration = Duration.ofMinutes(15); // 15 minutes
+        Duration refreshTokenDuration = Duration.ofDays(7); // 7 days
         
-        return new LoginResponse(
-            newAccessToken,
-            refreshToken,
-            "Bearer",
-            jwtUtils.extractExpiration(newAccessToken).getTime() - System.currentTimeMillis(),
-            user.getUsername(),
-            user.getRole().name()
+        cookieUtil.addCookiesToResponse(response,
+            cookieUtil.createAccessTokenCookie(newAccessToken, accessTokenDuration),
+            cookieUtil.createRefreshTokenCookie(newRefreshToken.getToken(), refreshTokenDuration)
         );
+        
+        log.info("Token refreshed successfully for user: {}", user.getEmail());
+        
+        LocalDateTime expiresAt = jwtService.getAccessTokenExpirationTime();
+        return authMapper.toLoginResponse(newAccessToken, newRefreshToken.getToken(), user, expiresAt);
     }
     
-    public void logout(String refreshToken) {
-        RefreshToken token = refreshTokenService.findByToken(refreshToken)
-            .orElseThrow(() -> new BusinessException("Refresh token not found", ErrorCodes.TOKEN_INVALID));
+    /**
+     * Logout user (invalidate refresh token)
+     */
+    @Transactional
+    public void logout(String refreshToken, String deviceId, HttpServletResponse response) {
+        // Delete refresh token
+        refreshTokenService.deleteByToken(refreshToken);
         
-        refreshTokenService.deleteByUserId(token.getUserId());
-        log.info("User logged out: {}", token.getUserId());
+        // Clear cookies
+        cookieUtil.addCookiesToResponse(response,
+            cookieUtil.clearAccessTokenCookie(),
+            cookieUtil.clearRefreshTokenCookie()
+        );
+        
+        log.info("User logged out successfully");
+    }
+    
+    /**
+     * Logout user from all devices
+     */
+    @Transactional
+    public void logoutAllDevices(String refreshToken, HttpServletResponse response) {
+        // Get user from refresh token
+        User user = refreshTokenService.getUserFromToken(refreshToken)
+            .orElseThrow(() -> new IllegalArgumentException("User not found for refresh token"));
+        
+        // Delete all refresh tokens for user
+        refreshTokenService.deleteAllByUser(user);
+        
+        // Clear cookies
+        cookieUtil.addCookiesToResponse(response,
+            cookieUtil.clearAccessTokenCookie(),
+            cookieUtil.clearRefreshTokenCookie()
+        );
+        
+        log.info("User logged out from all devices: {}", user.getEmail());
+    }
+    
+    /**
+     * Get user profile
+     */
+    public User getUserProfile(String email) {
+        return userRepository.findByEmail(email)
+            .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + email));
+    }
+    
+    /**
+     * Check if OTP exists for email and device
+     */
+    public boolean hasOtp(String email, String deviceId) {
+        return otpService.hasOtp(email, deviceId);
+    }
+    
+    /**
+     * Remove OTP for email and device
+     */
+    public void removeOtp(String email, String deviceId) {
+        otpService.removeOtp(email, deviceId);
     }
 }

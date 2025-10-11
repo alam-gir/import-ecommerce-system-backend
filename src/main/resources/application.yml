@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: importEcommerce
+  profiles:
+    active: dev
+
+server:
+  port: 8080
+
+jwt:
+  secret: 8Zz5tw0Ionm3XPZZfN0NOml3z9FMfmpgXwovR9fp6ryDIoGRM8EPHAB6iHsc0fb
+  access_token_expiration: 900000
+  refresh_token_expiration: 604800000
+
+app:
+  cookie:
+    domain: localhost
+    secure: false
+    same-site: Strict

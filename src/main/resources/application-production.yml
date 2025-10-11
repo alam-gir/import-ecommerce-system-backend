@@ -1,0 +1,46 @@
+spring:
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+  
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+  
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 3000
+          writetimeout: 5000
+
+server:
+  port: ${PORT:8080}
+  servlet:
+    context-path: /v1
+
+jwt:
+  secret: ${JWT_SECRET}
+  access_token_expiration: ${JWT_ACCESS_TOKEN_EXPIRATION:900000}
+  refresh_token_expiration: ${JWT_REFRESH_TOKEN_EXPIRATION:604800000}
+
+app:
+  cookie:
+    domain: ${COOKIE_DOMAIN:your-domain.com}
+    secure: ${COOKIE_SECURE:true}
+    same-site: ${COOKIE_SAME_SITE:Strict}
+
+logging:
+  level:
+    root: WARN

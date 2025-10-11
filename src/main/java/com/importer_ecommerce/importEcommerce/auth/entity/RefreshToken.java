@@ -1,38 +1,51 @@
 package com.importer_ecommerce.importEcommerce.auth.entity;
 
+import com.importer_ecommerce.importEcommerce.common.entity.BaseEntity;
+import com.importer_ecommerce.importEcommerce.user.entity.User;
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+/**
+ * Refresh token entity for managing JWT refresh tokens
+ * Supports multi-device login with device tracking
+ */
 @Entity
-@Table(name = "refresh_tokens")
-@Data
+@Table(name = "refresh_tokens",
+       uniqueConstraints = @UniqueConstraint(columnNames = "token", name = "uk_refresh_tokens_token"))
 @NoArgsConstructor
 @AllArgsConstructor
-public class RefreshToken {
+@Getter
+@Setter
+@Builder
+public class RefreshToken extends BaseEntity {
     
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
     
-    @Column(name = "user_id", nullable = false)
-    private UUID userId;
-    
-    @Column(nullable = false, unique = true)
+    @Column(name = "token", nullable = false, unique = true, length = 1000)
     private String token;
+    
+    @Column(name = "device_id", nullable = false)
+    private String deviceId;
     
     @Column(name = "expires_at", nullable = false)
     private LocalDateTime expiresAt;
     
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    /**
+     * Check if token is expired
+     */
+    public boolean isExpired() {
+        return LocalDateTime.now().isAfter(this.expiresAt);
+    }
     
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
+    /**
+     * Check if token is valid (not expired)
+     */
+    public boolean isValid() {
+        return !isExpired();
     }
 }
