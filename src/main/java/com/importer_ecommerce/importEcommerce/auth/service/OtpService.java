@@ -106,14 +106,6 @@ public class OtpService {
         }
     }
     
-    /**
-     * Check if OTP exists for email and device
-     */
-    public boolean hasOtp(String email, String deviceId) {
-        LocalDateTime now = LocalDateTime.now();
-        long count = otpRepository.countActiveOtpsByEmailAndDeviceId(email, deviceId, now);
-        return count > 0;
-    }
     
     /**
      * Remove OTP for email and device
@@ -145,24 +137,6 @@ public class OtpService {
         return otp.toString();
     }
     
-    /**
-     * Get current OTP for testing (DEV ONLY)
-     */
-    public String getCurrentOtpForTesting(String email, String deviceId) {
-        LocalDateTime now = LocalDateTime.now();
-        Optional<Otp> otpOptional = otpRepository.findActiveOtpByEmailAndDeviceId(email, deviceId, now);
-        
-        if (otpOptional.isEmpty()) {
-            throw new IllegalArgumentException("No active OTP found for the given email and device");
-        }
-        
-        Otp otp = otpOptional.get();
-        if (otp.isExpired()) {
-            throw new IllegalArgumentException("OTP has expired");
-        }
-        
-        return otp.getOtpCode();
-    }
     
     /**
      * Clean up expired OTPs (scheduled task)

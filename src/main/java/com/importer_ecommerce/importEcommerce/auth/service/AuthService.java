@@ -111,14 +111,6 @@ public class AuthService {
     }
     
     /**
-     * Get current OTP for testing (DEV ONLY)
-     */
-    public String getCurrentOtpForTesting(String email, String deviceId) {
-        // This is a test method - in production, remove this
-        return otpService.getCurrentOtpForTesting(email, deviceId);
-    }
-    
-    /**
      * Refresh access token
      */
     @Transactional
@@ -202,13 +194,6 @@ public class AuthService {
     public User getUserProfile(String email) {
         return userRepository.findByEmail(email)
             .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + email));
-    }
-    
-    /**
-     * Check if OTP exists for email and device
-     */
-    public boolean hasOtp(String email, String deviceId) {
-        return otpService.hasOtp(email, deviceId);
     }
     
     /**
