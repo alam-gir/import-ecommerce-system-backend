@@ -28,11 +28,4 @@ public interface CloudflareService {
      * @return true if deletion successful, false otherwise
      */
     boolean deleteFile(String publicUrl);
-    
-    /**
-     * Check if file exists in Cloudflare R2
-     * @param publicUrl the public URL to check
-     * @return true if file exists, false otherwise
-     */
-    boolean fileExists(String publicUrl);
 }

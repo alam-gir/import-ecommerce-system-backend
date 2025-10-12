@@ -46,8 +46,9 @@ spring:
 
 cloudflare:
   r2:
-    bucket-name: taqreem-dev
+    bucketName: taqreem
     endpoint: https://9cda468137d1fd4eb0b930ade6113b21.r2.cloudflarestorage.com
-    access-key-id: 97ce6d7917dd642150f05f8c605978bd
-    secret-access-key: 27cea66ff479ba56b48acb6acea0b3aef382579fd035a4fcaf15a3125c9ac1dd
-    public-url: https://pub-3c1ab4f1b24e4f518d015c01b73a0fe3.r2.dev
+    accessKeyId: 97ce6d7917dd642150f05f8c605978bd
+    secretAccessKey: 27cea66ff479ba56b48acb6acea0b3aef382579fd035a4fcaf15a3125c9ac1dd
+    publicUrl: https://pub-3c1ab4f1b24e4f518d015c01b73a0fe3.r2.dev
+    maxFileSizeBytes: 52428800  # 50MB

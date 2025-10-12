@@ -86,27 +86,6 @@ public class CloudflareR2ServiceImpl implements CloudflareService {
         }
     }
     
-    @Override
-    public boolean fileExists(String publicUrl) {
-        String key = extractKeyFromUrl(publicUrl);
-        
-        try (S3Client s3Client = createS3Client()) {
-            HeadObjectRequest headRequest = HeadObjectRequest.builder()
-                .bucket(config.getBucketName())
-                .key(key)
-                .build();
-            
-            s3Client.headObject(headRequest);
-            return true;
-            
-        } catch (NoSuchKeyException e) {
-            return false;
-        } catch (Exception e) {
-            log.error("Error checking file existence: {}", e.getMessage());
-            return false;
-        }
-    }
-    
     private void validateFile(MultipartFile file) {
         if (file.isEmpty()) {
             throw new IllegalArgumentException("File is empty");
