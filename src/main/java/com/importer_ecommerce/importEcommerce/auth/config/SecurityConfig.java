@@ -4,6 +4,7 @@ import com.importer_ecommerce.importEcommerce.auth.service.JwtService;
 import com.importer_ecommerce.importEcommerce.auth.security.JwtAuthenticationEntryPoint;
 import com.importer_ecommerce.importEcommerce.auth.security.JwtAuthenticationFilter;
 import com.importer_ecommerce.importEcommerce.common.util.ApiConstants;
+import com.importer_ecommerce.importEcommerce.common.util.TokenExtractor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -37,6 +38,7 @@ public class SecurityConfig {
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
     private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+    private final TokenExtractor tokenExtractor;
     
     /**
      * Password encoder bean
@@ -98,6 +100,6 @@ public class SecurityConfig {
      */
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
-        return new JwtAuthenticationFilter(jwtService, userDetailsService);
+        return new JwtAuthenticationFilter(jwtService, userDetailsService, tokenExtractor);
     }
 }

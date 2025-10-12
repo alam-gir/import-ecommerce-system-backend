@@ -6,10 +6,7 @@ import com.importer_ecommerce.importEcommerce.user.entity.UserStatus;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-/**
- * Response DTO for user profile information
- */
-public record ProfileResponse(
+public record AuthUserResponse(
     UUID id,
     String name,
     String email,
