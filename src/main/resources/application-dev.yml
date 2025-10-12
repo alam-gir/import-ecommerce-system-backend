@@ -44,9 +44,10 @@ spring:
                     timeout: 3000
                     writetimeout: 5000
 
-# cloudflare:
-#   r2:
-#     bucket-name: taqreem-dev
-#     endpoint: https://9cda468137d1fd4eb0b930ade6113b21.r2.cloudflarestorage.com
-#     access-key-id: 97ce6d7917dd642150f05f8c605978bd
-#     secret-access-key: 27cea66ff479ba56b48acb6acea0b3aef382579fd035a4fcaf15a3125c9ac1dd
+cloudflare:
+  r2:
+    bucket-name: taqreem-dev
+    endpoint: https://9cda468137d1fd4eb0b930ade6113b21.r2.cloudflarestorage.com
+    access-key-id: 97ce6d7917dd642150f05f8c605978bd
+    secret-access-key: 27cea66ff479ba56b48acb6acea0b3aef382579fd035a4fcaf15a3125c9ac1dd
+    public-url: https://pub-3c1ab4f1b24e4f518d015c01b73a0fe3.r2.dev
