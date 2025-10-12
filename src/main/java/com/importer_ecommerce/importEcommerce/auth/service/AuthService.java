@@ -68,8 +68,8 @@ public class AuthService {
         String accessToken = jwtService.generateAccessToken(user);
         RefreshToken refreshTokenEntity = refreshTokenService.createRefreshToken(user, deviceId);
         
-        cookieUtil.addCookieToResponse(response, cookieUtil.createAccessTokenCookie(accessToken, Duration.ofMinutes(15)));
-        cookieUtil.addCookieToResponse(response, cookieUtil.createRefreshTokenCookie(refreshTokenEntity.getToken(), Duration.ofDays(7)));
+        cookieUtil.addCookieToResponse(response, cookieUtil.createAccessTokenCookie(accessToken));
+        cookieUtil.addCookieToResponse(response, cookieUtil.createRefreshTokenCookie(refreshTokenEntity.getToken()));
         
         log.info("Admin login successful: {} ({})", user.getName(), email);
         
@@ -95,8 +95,8 @@ public class AuthService {
         String newAccessToken = jwtService.generateAccessToken(user);
         RefreshToken newRefreshToken = refreshTokenService.rotateRefreshToken(refreshToken, deviceId);
         
-        cookieUtil.addCookieToResponse(response, cookieUtil.createAccessTokenCookie(newAccessToken, Duration.ofMinutes(15)));
-        cookieUtil.addCookieToResponse(response, cookieUtil.createRefreshTokenCookie(newRefreshToken.getToken(), Duration.ofDays(7)));
+        cookieUtil.addCookieToResponse(response, cookieUtil.createAccessTokenCookie(newAccessToken));
+        cookieUtil.addCookieToResponse(response, cookieUtil.createRefreshTokenCookie(newRefreshToken.getToken()));
         
         log.info("Token refreshed for user: {} ({})", user.getName(), user.getEmail());
         

@@ -22,6 +22,12 @@ public class CookieUtil {
     @Value("${app.cookie.same-site:Strict}")
     private String cookieSameSite;
     
+    @Value("${app.cookie.access-token-max-age-days:7}")
+    private int accessTokenMaxAgeDays;
+    
+    @Value("${app.cookie.refresh-token-max-age-days:7}")
+    private int refreshTokenMaxAgeDays;
+    
     /**
      * Create a cookie with default settings
      */
@@ -41,14 +47,28 @@ public class CookieUtil {
     }
     
     /**
-     * Create access token cookie
+     * Create access token cookie with configured expiration
+     */
+    public Cookie createAccessTokenCookie(String token) {
+        return createCookie("access_token", token, Duration.ofDays(accessTokenMaxAgeDays));
+    }
+    
+    /**
+     * Create refresh token cookie with configured expiration
+     */
+    public Cookie createRefreshTokenCookie(String token) {
+        return createCookie("refresh_token", token, Duration.ofDays(refreshTokenMaxAgeDays));
+    }
+    
+    /**
+     * Create access token cookie with custom expiration
      */
     public Cookie createAccessTokenCookie(String token, Duration maxAge) {
         return createCookie("access_token", token, maxAge);
     }
     
     /**
-     * Create refresh token cookie
+     * Create refresh token cookie with custom expiration
      */
     public Cookie createRefreshTokenCookie(String token, Duration maxAge) {
         return createCookie("refresh_token", token, maxAge);

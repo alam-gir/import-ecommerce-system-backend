@@ -14,7 +14,7 @@ server:
 
 jwt:
   secret: 8Zz5tw0Ionm3XPZZfN0NOml3z9FMfmpgXwovR9fp6ryDIoGRM8EPHAB6iHsc0fb
-  access_token_expiration: 900000
+  access_token_expiration: 604800000
   refresh_token_expiration: 604800000
 
 app:
@@ -22,3 +22,5 @@ app:
     domain: localhost
     secure: false
     same-site: Strict
+    access-token-max-age-days: 7
+    refresh-token-max-age-days: 7
