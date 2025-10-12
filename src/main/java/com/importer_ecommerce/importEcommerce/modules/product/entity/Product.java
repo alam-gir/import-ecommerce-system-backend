@@ -44,6 +44,22 @@ public class Product extends AuditableEntity {
     @Column(name = "minimum_order_quantity")
     private Integer minimumOrderQuantity;
     
+    // Product relationships
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<ProductVariant> variants = new ArrayList<>();
+    
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<VariantAttribute> variantAttributes = new ArrayList<>();
+    
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<ProductSpecification> specifications = new ArrayList<>();
+    
+    @OneToOne(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private ProductSEO seo;
+    
     /**
      * Check if product has minimum order quantity requirement
      */
