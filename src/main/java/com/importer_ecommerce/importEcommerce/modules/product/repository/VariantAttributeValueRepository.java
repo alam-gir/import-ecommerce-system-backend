@@ -1,6 +1,8 @@
 package com.importer_ecommerce.importEcommerce.modules.product.repository;
 
 import com.importer_ecommerce.importEcommerce.modules.product.entity.VariantAttributeValue;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,91 +14,103 @@ import java.util.UUID;
 
 /**
  * Repository for VariantAttributeValue entity
+ * Handles all database operations for attribute values (Red, Blue, Small, Large, etc.)
  */
 @Repository
 public interface VariantAttributeValueRepository extends JpaRepository<VariantAttributeValue, UUID> {
-    
+
     /**
-     * Find attribute values by variant attribute ID
+     * Find variant attribute value by variant attribute and value
+     * Used to check if value already exists for an attribute
      */
-    @Query("SELECT v FROM VariantAttributeValue v WHERE v.variantAttribute.id = :attributeId AND v.isDeleted = false ORDER BY v.sortOrder, v.value")
-    List<VariantAttributeValue> findByVariantAttributeId(@Param("attributeId") UUID attributeId);
-    
+    Optional<VariantAttributeValue> findByVariantAttributeIdAndValueIgnoreCase(UUID variantAttributeId, String value);
+
     /**
-     * Find active attribute values by variant attribute ID
+     * Find all variant attribute values for a given variant attribute
+     * Returns values ordered by value
      */
-    @Query("SELECT v FROM VariantAttributeValue v WHERE v.variantAttribute.id = :attributeId AND v.isActive = true AND v.isDeleted = false ORDER BY v.sortOrder, v.value")
-    List<VariantAttributeValue> findActiveByVariantAttributeId(@Param("attributeId") UUID attributeId);
-    
+    @Query("SELECT vav FROM VariantAttributeValue vav WHERE vav.variantAttribute.id = :attributeId ORDER BY vav.value")
+    List<VariantAttributeValue> findByVariantAttributeIdAndNotDeleted(@Param("attributeId") UUID attributeId);
+
     /**
-     * Find attribute values by product ID
+     * Find all variant attribute values for a given variant attribute with pagination
      */
-    @Query("SELECT v FROM VariantAttributeValue v WHERE v.variantAttribute.product.id = :productId AND v.isDeleted = false ORDER BY v.variantAttribute.sortOrder, v.sortOrder, v.value")
-    List<VariantAttributeValue> findByProductId(@Param("productId") UUID productId);
-    
+    @Query("SELECT vav FROM VariantAttributeValue vav WHERE vav.variantAttribute.id = :attributeId ORDER BY vav.value")
+    Page<VariantAttributeValue> findByVariantAttributeIdAndNotDeleted(@Param("attributeId") UUID attributeId, Pageable pageable);
+
     /**
-     * Find active attribute values by product ID
+     * Check if a variant attribute value already exists for an attribute
+     * Used for update operations to prevent duplicate values
      */
-    @Query("SELECT v FROM VariantAttributeValue v WHERE v.variantAttribute.product.id = :productId AND v.isActive = true AND v.isDeleted = false ORDER BY v.variantAttribute.sortOrder, v.sortOrder, v.value")
-    List<VariantAttributeValue> findActiveByProductId(@Param("productId") UUID productId);
-    
+    @Query("SELECT COUNT(vav) > 0 FROM VariantAttributeValue vav WHERE vav.variantAttribute.id = :attributeId AND vav.value = :value AND (:excludeId IS NULL OR vav.id != :excludeId)")
+    boolean existsByVariantAttributeIdAndValueAndNotDeleted(@Param("attributeId") UUID attributeId, @Param("value") String value, @Param("excludeId") UUID excludeId);
+
     /**
-     * Find attribute values by value and variant attribute ID
+     * Find variant attribute value by ID
      */
-    @Query("SELECT v FROM VariantAttributeValue v WHERE v.value = :value AND v.variantAttribute.id = :attributeId AND v.isDeleted = false")
-    Optional<VariantAttributeValue> findByValueAndVariantAttributeId(@Param("value") String value, @Param("attributeId") UUID attributeId);
-    
+    @Query("SELECT vav FROM VariantAttributeValue vav WHERE vav.id = :id")
+    Optional<VariantAttributeValue> findByIdAndNotDeleted(@Param("id") UUID id);
+
     /**
-     * Find attribute values by display value and variant attribute ID
+     * Find values by attribute type
+     * Returns values for attributes of a specific type (TEXT, IMAGE, NUMBER)
      */
-    @Query("SELECT v FROM VariantAttributeValue v WHERE v.displayValue = :displayValue AND v.variantAttribute.id = :attributeId AND v.isDeleted = false")
-    Optional<VariantAttributeValue> findByDisplayValueAndVariantAttributeId(@Param("displayValue") String displayValue, @Param("attributeId") UUID attributeId);
-    
+    @Query("SELECT vav FROM VariantAttributeValue vav WHERE vav.variantAttribute.attributeType = :attributeType ORDER BY vav.value")
+    List<VariantAttributeValue> findByAttributeType(@Param("attributeType") com.importer_ecommerce.importEcommerce.modules.product.entity.VariantAttribute.AttributeType attributeType);
+
     /**
-     * Find attribute values with images
+     * Find values with images
+     * Returns values that have image URLs
      */
-    @Query("SELECT v FROM VariantAttributeValue v WHERE v.imageUrl IS NOT NULL AND v.imageUrl != '' AND v.isDeleted = false ORDER BY v.value")
-    List<VariantAttributeValue> findWithImages();
-    
+    @Query("SELECT vav FROM VariantAttributeValue vav WHERE vav.imageUrl IS NOT NULL AND vav.imageUrl != '' ORDER BY vav.value")
+    List<VariantAttributeValue> findValuesWithImages();
+
     /**
-     * Find attribute values with hex colors
+     * Find values without images
+     * Returns values that don't have image URLs
      */
-    @Query("SELECT v FROM VariantAttributeValue v WHERE v.hexColor IS NOT NULL AND v.hexColor != '' AND v.isDeleted = false ORDER BY v.value")
-    List<VariantAttributeValue> findWithHexColors();
-    
+    @Query("SELECT vav FROM VariantAttributeValue vav WHERE (vav.imageUrl IS NULL OR vav.imageUrl = '') ORDER BY vav.value")
+    List<VariantAttributeValue> findValuesWithoutImages();
+
     /**
-     * Find attribute values by hex color
+     * Count values for an attribute
+     * Returns the number of values for a specific attribute
      */
-    @Query("SELECT v FROM VariantAttributeValue v WHERE v.hexColor = :hexColor AND v.isDeleted = false ORDER BY v.value")
-    List<VariantAttributeValue> findByHexColor(@Param("hexColor") String hexColor);
-    
-    /**
-     * Find attribute values by value pattern
-     */
-    @Query("SELECT v FROM VariantAttributeValue v WHERE v.value LIKE %:valuePattern% AND v.isDeleted = false ORDER BY v.value")
-    List<VariantAttributeValue> findByValueContaining(@Param("valuePattern") String valuePattern);
-    
-    /**
-     * Check if value exists for attribute (excluding current value)
-     */
-    @Query("SELECT COUNT(v) > 0 FROM VariantAttributeValue v WHERE v.value = :value AND v.variantAttribute.id = :attributeId AND v.isDeleted = false AND (:excludeId IS NULL OR v.id != :excludeId)")
-    boolean existsByValueAndVariantAttributeIdAndNotDeleted(@Param("value") String value, @Param("attributeId") UUID attributeId, @Param("excludeId") UUID excludeId);
-    
-    /**
-     * Count attribute values by variant attribute
-     */
-    @Query("SELECT COUNT(v) FROM VariantAttributeValue v WHERE v.variantAttribute.id = :attributeId AND v.isDeleted = false")
+    @Query("SELECT COUNT(vav) FROM VariantAttributeValue vav WHERE vav.variantAttribute.id = :attributeId")
     long countByVariantAttributeId(@Param("attributeId") UUID attributeId);
-    
+
     /**
-     * Find attribute values by variant attribute and active status
+     * Find values used by variants
+     * Returns values that are actually used by product variants
      */
-    @Query("SELECT v FROM VariantAttributeValue v WHERE v.variantAttribute.id = :attributeId AND v.isActive = :isActive AND v.isDeleted = false ORDER BY v.sortOrder, v.value")
-    List<VariantAttributeValue> findByVariantAttributeIdAndIsActive(@Param("attributeId") UUID attributeId, @Param("isActive") Boolean isActive);
-    
+    @Query("SELECT DISTINCT vav FROM VariantAttributeValue vav JOIN vav.variants v WHERE v.isActive = true ORDER BY vav.value")
+    List<VariantAttributeValue> findValuesUsedByVariants();
+
     /**
-     * Find all unique values for an attribute type
+     * Find values by product
+     * Returns all values for all attributes of a specific product
      */
-    @Query("SELECT DISTINCT v.value FROM VariantAttributeValue v WHERE v.variantAttribute.attributeType = :attributeType AND v.isDeleted = false ORDER BY v.value")
+    @Query("SELECT vav FROM VariantAttributeValue vav WHERE vav.variantAttribute.product.id = :productId ORDER BY vav.variantAttribute.name, vav.value")
+    List<VariantAttributeValue> findByProductId(@Param("productId") UUID productId);
+
+    /**
+     * Find values by product and attribute type
+     * Returns values for attributes of a specific type for a specific product
+     */
+    @Query("SELECT vav FROM VariantAttributeValue vav WHERE vav.variantAttribute.product.id = :productId AND vav.variantAttribute.attributeType = :attributeType ORDER BY vav.value")
+    List<VariantAttributeValue> findByProductIdAndAttributeType(@Param("productId") UUID productId, @Param("attributeType") com.importer_ecommerce.importEcommerce.modules.product.entity.VariantAttribute.AttributeType attributeType);
+
+    /**
+     * Find all unique values for an attribute type across all products
+     * Used for filtering and search functionality
+     */
+    @Query("SELECT DISTINCT vav.value FROM VariantAttributeValue vav WHERE vav.variantAttribute.attributeType = :attributeType ORDER BY vav.value")
     List<String> findDistinctValuesByAttributeType(@Param("attributeType") com.importer_ecommerce.importEcommerce.modules.product.entity.VariantAttribute.AttributeType attributeType);
+
+    /**
+     * Find values by multiple attribute IDs
+     * Returns values for multiple attributes at once
+     */
+    @Query("SELECT vav FROM VariantAttributeValue vav WHERE vav.variantAttribute.id IN :attributeIds ORDER BY vav.variantAttribute.name, vav.value")
+    List<VariantAttributeValue> findByVariantAttributeIds(@Param("attributeIds") List<UUID> attributeIds);
 }

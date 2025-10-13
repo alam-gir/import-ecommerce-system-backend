@@ -36,13 +36,13 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     /**
      * Find admin users by role
      */
-    @Query("SELECT u FROM User u WHERE u.role = :role AND u.isDeleted = false")
+    @Query("SELECT u FROM User u WHERE u.role = :role")
     java.util.List<User> findByRole(@Param("role") UserRole role);
     
     /**
      * Find active users by role
      */
-    @Query("SELECT u FROM User u WHERE u.role = :role AND u.status = :status AND u.isDeleted = false")
+    @Query("SELECT u FROM User u WHERE u.role = :role AND u.status = :status")
     java.util.List<User> findByRoleAndStatus(@Param("role") UserRole role, @Param("status") UserStatus status);
     
     /**

@@ -1,6 +1,8 @@
 package com.importer_ecommerce.importEcommerce.modules.product.repository;
 
 import com.importer_ecommerce.importEcommerce.modules.product.entity.ProductSpecification;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,97 +14,102 @@ import java.util.UUID;
 
 /**
  * Repository for ProductSpecification entity
+ * Handles all database operations for product specifications (Material, Care instructions, etc.)
  */
 @Repository
 public interface ProductSpecificationRepository extends JpaRepository<ProductSpecification, UUID> {
-    
+
     /**
-     * Find specifications by product ID
+     * Find product specification by product and name
+     * Used to check if specification name already exists for a product
      */
-    @Query("SELECT s FROM ProductSpecification s WHERE s.product.id = :productId AND s.isDeleted = false ORDER BY s.sortOrder, s.name")
-    List<ProductSpecification> findByProductId(@Param("productId") UUID productId);
-    
+    Optional<ProductSpecification> findByProductIdAndNameIgnoreCase(UUID productId, String name);
+
     /**
-     * Find active specifications by product ID
+     * Find all product specifications for a given product
+     * Returns specifications ordered by name
      */
-    @Query("SELECT s FROM ProductSpecification s WHERE s.product.id = :productId AND s.isActive = true AND s.isDeleted = false ORDER BY s.sortOrder, s.name")
-    List<ProductSpecification> findActiveByProductId(@Param("productId") UUID productId);
-    
+    @Query("SELECT ps FROM ProductSpecification ps WHERE ps.product.id = :productId ORDER BY ps.name")
+    List<ProductSpecification> findByProductIdAndNotDeleted(@Param("productId") UUID productId);
+
     /**
-     * Find highlighted specifications by product ID
+     * Find all product specifications for a given product with pagination
      */
-    @Query("SELECT s FROM ProductSpecification s WHERE s.product.id = :productId AND s.isHighlighted = true AND s.isDeleted = false ORDER BY s.sortOrder, s.name")
-    List<ProductSpecification> findHighlightedByProductId(@Param("productId") UUID productId);
-    
+    @Query("SELECT ps FROM ProductSpecification ps WHERE ps.product.id = :productId ORDER BY ps.name")
+    Page<ProductSpecification> findByProductIdAndNotDeleted(@Param("productId") UUID productId, Pageable pageable);
+
     /**
-     * Find specification by name and product ID
+     * Check if a product specification name already exists for a product
+     * Used for update operations to prevent duplicate specification names
      */
-    @Query("SELECT s FROM ProductSpecification s WHERE s.name = :name AND s.product.id = :productId AND s.isDeleted = false")
-    Optional<ProductSpecification> findByNameAndProductId(@Param("name") String name, @Param("productId") UUID productId);
-    
+    @Query("SELECT COUNT(ps) > 0 FROM ProductSpecification ps WHERE ps.product.id = :productId AND ps.name = :name AND (:excludeId IS NULL OR ps.id != :excludeId)")
+    boolean existsByProductIdAndNameAndNotDeleted(@Param("productId") UUID productId, @Param("name") String name, @Param("excludeId") UUID excludeId);
+
+    /**
+     * Find product specification by ID
+     */
+    @Query("SELECT ps FROM ProductSpecification ps WHERE ps.id = :id")
+    Optional<ProductSpecification> findByIdAndNotDeleted(@Param("id") UUID id);
+
+    /**
+     * Find specifications by name across all products
+     * Returns specifications with a specific name from all products
+     */
+    @Query("SELECT ps FROM ProductSpecification ps WHERE ps.name = :name ORDER BY ps.product.title, ps.name")
+    List<ProductSpecification> findByNameAndNotDeleted(@Param("name") String name);
+
     /**
      * Find specifications by name pattern
+     * Returns specifications with names containing the search term
      */
-    @Query("SELECT s FROM ProductSpecification s WHERE s.name LIKE %:namePattern% AND s.isDeleted = false ORDER BY s.name")
-    List<ProductSpecification> findByNameContaining(@Param("namePattern") String namePattern);
-    
+    @Query("SELECT ps FROM ProductSpecification ps WHERE ps.name LIKE %:searchTerm% ORDER BY ps.name")
+    List<ProductSpecification> findByNameContainingIgnoreCase(@Param("searchTerm") String searchTerm);
+
+    /**
+     * Count specifications for a product
+     * Returns the number of specifications for a specific product
+     */
+    @Query("SELECT COUNT(ps) FROM ProductSpecification ps WHERE ps.product.id = :productId")
+    long countByProductId(@Param("productId") UUID productId);
+
+    /**
+     * Find specifications with long values
+     * Returns specifications with values longer than the specified length
+     */
+    @Query("SELECT ps FROM ProductSpecification ps WHERE LENGTH(ps.value) > :minLength ORDER BY LENGTH(ps.value) DESC")
+    List<ProductSpecification> findSpecificationsWithLongValues(@Param("minLength") int minLength);
+
     /**
      * Find specifications by value pattern
+     * Returns specifications with values containing the search term
      */
-    @Query("SELECT s FROM ProductSpecification s WHERE s.value LIKE %:valuePattern% AND s.isDeleted = false ORDER BY s.name")
-    List<ProductSpecification> findByValueContaining(@Param("valuePattern") String valuePattern);
-    
+    @Query("SELECT ps FROM ProductSpecification ps WHERE ps.value LIKE %:searchTerm% ORDER BY ps.name")
+    List<ProductSpecification> findByValueContainingIgnoreCase(@Param("searchTerm") String searchTerm);
+
     /**
-     * Find specifications by unit
+     * Find all unique specification names across all products
+     * Used for filtering and search functionality
      */
-    @Query("SELECT s FROM ProductSpecification s WHERE s.unit = :unit AND s.isDeleted = false ORDER BY s.name")
-    List<ProductSpecification> findByUnit(@Param("unit") String unit);
-    
-    /**
-     * Find specifications with units
-     */
-    @Query("SELECT s FROM ProductSpecification s WHERE s.unit IS NOT NULL AND s.unit != '' AND s.isDeleted = false ORDER BY s.name")
-    List<ProductSpecification> findWithUnits();
-    
-    /**
-     * Find specifications without units
-     */
-    @Query("SELECT s FROM ProductSpecification s WHERE (s.unit IS NULL OR s.unit = '') AND s.isDeleted = false ORDER BY s.name")
-    List<ProductSpecification> findWithoutUnits();
-    
-    /**
-     * Check if specification name exists for product (excluding current specification)
-     */
-    @Query("SELECT COUNT(s) > 0 FROM ProductSpecification s WHERE s.name = :name AND s.product.id = :productId AND s.isDeleted = false AND (:excludeId IS NULL OR s.id != :excludeId)")
-    boolean existsByNameAndProductIdAndNotDeleted(@Param("name") String name, @Param("productId") UUID productId, @Param("excludeId") UUID excludeId);
-    
-    /**
-     * Count specifications by product
-     */
-    @Query("SELECT COUNT(s) FROM ProductSpecification s WHERE s.product.id = :productId AND s.isDeleted = false")
-    long countByProductId(@Param("productId") UUID productId);
-    
-    /**
-     * Find specifications by product and active status
-     */
-    @Query("SELECT s FROM ProductSpecification s WHERE s.product.id = :productId AND s.isActive = :isActive AND s.isDeleted = false ORDER BY s.sortOrder, s.name")
-    List<ProductSpecification> findByProductIdAndIsActive(@Param("productId") UUID productId, @Param("isActive") Boolean isActive);
-    
-    /**
-     * Find specifications by product and highlighted status
-     */
-    @Query("SELECT s FROM ProductSpecification s WHERE s.product.id = :productId AND s.isHighlighted = :isHighlighted AND s.isDeleted = false ORDER BY s.sortOrder, s.name")
-    List<ProductSpecification> findByProductIdAndIsHighlighted(@Param("productId") UUID productId, @Param("isHighlighted") Boolean isHighlighted);
-    
-    /**
-     * Find all unique specification names
-     */
-    @Query("SELECT DISTINCT s.name FROM ProductSpecification s WHERE s.isDeleted = false ORDER BY s.name")
+    @Query("SELECT DISTINCT ps.name FROM ProductSpecification ps ORDER BY ps.name")
     List<String> findDistinctNames();
-    
+
     /**
-     * Find all unique units
+     * Find specifications by multiple product IDs
+     * Returns specifications for multiple products at once
      */
-    @Query("SELECT DISTINCT s.unit FROM ProductSpecification s WHERE s.unit IS NOT NULL AND s.unit != '' AND s.isDeleted = false ORDER BY s.unit")
-    List<String> findDistinctUnits();
+    @Query("SELECT ps FROM ProductSpecification ps WHERE ps.product.id IN :productIds ORDER BY ps.product.title, ps.name")
+    List<ProductSpecification> findByProductIds(@Param("productIds") List<UUID> productIds);
+
+    /**
+     * Find specifications by category
+     * Returns specifications for products in a specific category
+     */
+    @Query("SELECT ps FROM ProductSpecification ps WHERE ps.product.category.id = :categoryId ORDER BY ps.product.title, ps.name")
+    List<ProductSpecification> findByCategoryId(@Param("categoryId") UUID categoryId);
+
+    /**
+     * Find specifications by category with pagination
+     */
+    @Query("SELECT ps FROM ProductSpecification ps WHERE ps.product.category.id = :categoryId ORDER BY ps.product.title, ps.name")
+    Page<ProductSpecification> findByCategoryId(@Param("categoryId") UUID categoryId, Pageable pageable);
 }

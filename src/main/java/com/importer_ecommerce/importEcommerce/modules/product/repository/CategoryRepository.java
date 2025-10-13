@@ -30,50 +30,50 @@ public interface CategoryRepository extends JpaRepository<Category, UUID> {
     List<Category> findByTitleContainingIgnoreCase(String title);
     
     /**
-     * Find all active categories (not deleted)
+     * Find all categories
      */
-    @Query("SELECT c FROM Category c WHERE c.isDeleted = false ORDER BY c.title")
+    @Query("SELECT c FROM Category c ORDER BY c.title")
     List<Category> findAllActive();
     
     /**
-     * Find all active categories with pagination
+     * Find all categories with pagination
      */
-    @Query("SELECT c FROM Category c WHERE c.isDeleted = false ORDER BY c.title")
+    @Query("SELECT c FROM Category c ORDER BY c.title")
     Page<Category> findAllActive(Pageable pageable);
     
     /**
      * Find categories with products count
      */
-    @Query("SELECT c FROM Category c LEFT JOIN FETCH c.products p WHERE c.isDeleted = false AND (p IS NULL OR p.isDeleted = false)")
+    @Query("SELECT c FROM Category c LEFT JOIN FETCH c.products p")
     List<Category> findAllWithActiveProducts();
     
     /**
      * Check if category title exists (excluding current category)
      */
-    @Query("SELECT COUNT(c) > 0 FROM Category c WHERE c.title = :title AND c.isDeleted = false AND (:excludeId IS NULL OR c.id != :excludeId)")
+    @Query("SELECT COUNT(c) > 0 FROM Category c WHERE c.title = :title AND (:excludeId IS NULL OR c.id != :excludeId)")
     boolean existsByTitleAndNotDeleted(@Param("title") String title, @Param("excludeId") UUID excludeId);
     
     /**
-     * Find category by ID and not deleted
+     * Find category by ID
      */
-    @Query("SELECT c FROM Category c WHERE c.id = :id AND c.isDeleted = false")
+    @Query("SELECT c FROM Category c WHERE c.id = :id")
     Optional<Category> findByIdAndNotDeleted(@Param("id") UUID id);
     
     /**
-     * Find categories by title containing and not deleted with pagination
+     * Find categories by title containing with pagination
      */
-    @Query("SELECT c FROM Category c WHERE c.title ILIKE %:search% AND c.isDeleted = false ORDER BY c.title")
+    @Query("SELECT c FROM Category c WHERE c.title ILIKE %:search% ORDER BY c.title")
     Page<Category> findByTitleContainingIgnoreCaseAndNotDeleted(@Param("search") String search, Pageable pageable);
     
     /**
-     * Find categories by status and not deleted with pagination
+     * Find categories by status with pagination
      */
-    @Query("SELECT c FROM Category c WHERE c.status = :status AND c.isDeleted = false ORDER BY c.title")
+    @Query("SELECT c FROM Category c WHERE c.status = :status ORDER BY c.title")
     Page<Category> findByStatusAndNotDeleted(@Param("status") CategoryStatus status, Pageable pageable);
     
     /**
-     * Find categories by title containing, status and not deleted with pagination
+     * Find categories by title containing, status with pagination
      */
-    @Query("SELECT c FROM Category c WHERE c.title ILIKE %:search% AND c.status = :status AND c.isDeleted = false ORDER BY c.title")
+    @Query("SELECT c FROM Category c WHERE c.title ILIKE %:search% AND c.status = :status ORDER BY c.title")
     Page<Category> findByTitleContainingIgnoreCaseAndStatusAndNotDeleted(@Param("search") String search, @Param("status") CategoryStatus status, Pageable pageable);
 }

@@ -19,114 +19,114 @@ public interface ProductSEORepository extends JpaRepository<ProductSEO, UUID> {
     /**
      * Find SEO by product ID
      */
-    @Query("SELECT s FROM ProductSEO s WHERE s.product.id = :productId AND s.isDeleted = false")
+    @Query("SELECT s FROM ProductSEO s WHERE s.product.id = :productId")
     Optional<ProductSEO> findByProductId(@Param("productId") UUID productId);
     
     /**
      * Find active SEO by product ID
      */
-    @Query("SELECT s FROM ProductSEO s WHERE s.product.id = :productId AND s.isActive = true AND s.isDeleted = false")
+    @Query("SELECT s FROM ProductSEO s WHERE s.product.id = :productId AND s.isActive = true")
     Optional<ProductSEO> findActiveByProductId(@Param("productId") UUID productId);
     
     /**
      * Find SEO with meta titles
      */
-    @Query("SELECT s FROM ProductSEO s WHERE s.metaTitle IS NOT NULL AND s.metaTitle != '' AND s.isDeleted = false ORDER BY s.metaTitle")
+    @Query("SELECT s FROM ProductSEO s WHERE s.metaTitle IS NOT NULL AND s.metaTitle != '' ORDER BY s.metaTitle")
     List<ProductSEO> findWithMetaTitles();
     
     /**
      * Find SEO with meta descriptions
      */
-    @Query("SELECT s FROM ProductSEO s WHERE s.metaDescription IS NOT NULL AND s.metaDescription != '' AND s.isDeleted = false ORDER BY s.metaTitle")
+    @Query("SELECT s FROM ProductSEO s WHERE s.metaDescription IS NOT NULL AND s.metaDescription != '' ORDER BY s.metaTitle")
     List<ProductSEO> findWithMetaDescriptions();
     
     /**
      * Find SEO with meta keywords
      */
-    @Query("SELECT s FROM ProductSEO s WHERE s.metaKeywords IS NOT NULL AND s.metaKeywords != '' AND s.isDeleted = false ORDER BY s.metaTitle")
+    @Query("SELECT s FROM ProductSEO s WHERE s.metaKeywords IS NOT NULL AND s.metaKeywords != '' ORDER BY s.metaTitle")
     List<ProductSEO> findWithMetaKeywords();
     
     /**
      * Find SEO with meta images
      */
-    @Query("SELECT s FROM ProductSEO s WHERE s.metaImage IS NOT NULL AND s.metaImage != '' AND s.isDeleted = false ORDER BY s.metaTitle")
+    @Query("SELECT s FROM ProductSEO s WHERE s.metaImage IS NOT NULL AND s.metaImage != '' ORDER BY s.metaTitle")
     List<ProductSEO> findWithMetaImages();
     
     /**
      * Find SEO with canonical URLs
      */
-    @Query("SELECT s FROM ProductSEO s WHERE s.canonicalUrl IS NOT NULL AND s.canonicalUrl != '' AND s.isDeleted = false ORDER BY s.canonicalUrl")
+    @Query("SELECT s FROM ProductSEO s WHERE s.canonicalUrl IS NOT NULL AND s.canonicalUrl != '' ORDER BY s.canonicalUrl")
     List<ProductSEO> findWithCanonicalUrls();
     
     /**
      * Find SEO with structured data
      */
-    @Query("SELECT s FROM ProductSEO s WHERE s.structuredData IS NOT NULL AND s.structuredData != '' AND s.isDeleted = false ORDER BY s.metaTitle")
+    @Query("SELECT s FROM ProductSEO s WHERE s.structuredData IS NOT NULL AND s.structuredData != '' ORDER BY s.metaTitle")
     List<ProductSEO> findWithStructuredData();
     
     /**
      * Find SEO by meta title pattern
      */
-    @Query("SELECT s FROM ProductSEO s WHERE s.metaTitle LIKE %:titlePattern% AND s.isDeleted = false ORDER BY s.metaTitle")
+    @Query("SELECT s FROM ProductSEO s WHERE s.metaTitle LIKE %:titlePattern% ORDER BY s.metaTitle")
     List<ProductSEO> findByMetaTitleContaining(@Param("titlePattern") String titlePattern);
     
     /**
      * Find SEO by meta description pattern
      */
-    @Query("SELECT s FROM ProductSEO s WHERE s.metaDescription LIKE %:descriptionPattern% AND s.isDeleted = false ORDER BY s.metaTitle")
+    @Query("SELECT s FROM ProductSEO s WHERE s.metaDescription LIKE %:descriptionPattern% ORDER BY s.metaTitle")
     List<ProductSEO> findByMetaDescriptionContaining(@Param("descriptionPattern") String descriptionPattern);
     
     /**
      * Find SEO by meta keywords pattern
      */
-    @Query("SELECT s FROM ProductSEO s WHERE s.metaKeywords LIKE %:keywordsPattern% AND s.isDeleted = false ORDER BY s.metaTitle")
+    @Query("SELECT s FROM ProductSEO s WHERE s.metaKeywords LIKE %:keywordsPattern% ORDER BY s.metaTitle")
     List<ProductSEO> findByMetaKeywordsContaining(@Param("keywordsPattern") String keywordsPattern);
     
     /**
      * Find SEO by canonical URL pattern
      */
-    @Query("SELECT s FROM ProductSEO s WHERE s.canonicalUrl LIKE %:urlPattern% AND s.isDeleted = false ORDER BY s.canonicalUrl")
+    @Query("SELECT s FROM ProductSEO s WHERE s.canonicalUrl LIKE %:urlPattern% ORDER BY s.canonicalUrl")
     List<ProductSEO> findByCanonicalUrlContaining(@Param("urlPattern") String urlPattern);
     
     /**
      * Find active SEO
      */
-    @Query("SELECT s FROM ProductSEO s WHERE s.isActive = true AND s.isDeleted = false ORDER BY s.metaTitle")
+    @Query("SELECT s FROM ProductSEO s WHERE s.isActive = true ORDER BY s.metaTitle")
     List<ProductSEO> findActive();
     
     /**
      * Find inactive SEO
      */
-    @Query("SELECT s FROM ProductSEO s WHERE s.isActive = false AND s.isDeleted = false ORDER BY s.metaTitle")
+    @Query("SELECT s FROM ProductSEO s WHERE s.isActive = false ORDER BY s.metaTitle")
     List<ProductSEO> findInactive();
     
     /**
      * Check if SEO exists for product
      */
-    @Query("SELECT COUNT(s) > 0 FROM ProductSEO s WHERE s.product.id = :productId AND s.isDeleted = false")
+    @Query("SELECT COUNT(s) > 0 FROM ProductSEO s WHERE s.product.id = :productId")
     boolean existsByProductId(@Param("productId") UUID productId);
     
     /**
      * Count SEO records
      */
-    @Query("SELECT COUNT(s) FROM ProductSEO s WHERE s.isDeleted = false")
+    @Query("SELECT COUNT(s) FROM ProductSEO s")
     long countAll();
     
     /**
      * Count active SEO records
      */
-    @Query("SELECT COUNT(s) FROM ProductSEO s WHERE s.isActive = true AND s.isDeleted = false")
+    @Query("SELECT COUNT(s) FROM ProductSEO s WHERE s.isActive = true")
     long countActive();
     
     /**
      * Find SEO without meta titles
      */
-    @Query("SELECT s FROM ProductSEO s WHERE (s.metaTitle IS NULL OR s.metaTitle = '') AND s.isDeleted = false ORDER BY s.product.title")
+    @Query("SELECT s FROM ProductSEO s WHERE (s.metaTitle IS NULL OR s.metaTitle = '') ORDER BY s.product.title")
     List<ProductSEO> findWithoutMetaTitles();
     
     /**
      * Find SEO without meta descriptions
      */
-    @Query("SELECT s FROM ProductSEO s WHERE (s.metaDescription IS NULL OR s.metaDescription = '') AND s.isDeleted = false ORDER BY s.product.title")
+    @Query("SELECT s FROM ProductSEO s WHERE (s.metaDescription IS NULL OR s.metaDescription = '') ORDER BY s.product.title")
     List<ProductSEO> findWithoutMetaDescriptions();
 }

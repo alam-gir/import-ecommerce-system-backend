@@ -1,6 +1,7 @@
 package com.importer_ecommerce.importEcommerce.modules.product.service.impl;
 
 import com.importer_ecommerce.importEcommerce.cloudflare.service.CloudflareService;
+import com.importer_ecommerce.importEcommerce.common.exception.ApiException;
 import com.importer_ecommerce.importEcommerce.common.exception.ConflictException;
 import com.importer_ecommerce.importEcommerce.common.exception.NotFoundException;
 import com.importer_ecommerce.importEcommerce.modules.product.entity.Category;
@@ -11,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -43,7 +45,7 @@ public class CategoryServiceImpl implements CategoryService {
                 log.info("Category image uploaded to Cloudflare: {}", imageUrl);
             } catch (Exception e) {
                 log.error("Failed to upload category image: {}", e.getMessage());
-                throw new RuntimeException("Failed to upload image", e);
+                throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to upload category image: " + e.getMessage());
             }
         }
         
@@ -88,7 +90,7 @@ public class CategoryServiceImpl implements CategoryService {
                 }
             } catch (Exception e) {
                 log.error("Failed to upload new category image: {}", e.getMessage());
-                throw new RuntimeException("Failed to upload image", e);
+                throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to upload new category image: " + e.getMessage());
             }
         }
         
@@ -137,9 +139,8 @@ public class CategoryServiceImpl implements CategoryService {
             }
         }
         
-        // Soft delete the category
-        category.setIsDeleted(true);
-        categoryRepository.save(category);
+        // Hard delete the category
+        categoryRepository.delete(category);
         
         log.info("Category deleted successfully: {}", category.getTitle());
         return true;

@@ -22,6 +22,9 @@ public class Product extends AuditableEntity {
     @Column(nullable = false, length = 255)
     private String title;
     
+    @Column(length = 2000)
+    private String description;
+    
     @Column(length = 500)
     private String profileImage;
     

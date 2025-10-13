@@ -24,79 +24,103 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
     Optional<Product> findByTitleIgnoreCase(String title);
     
     /**
-     * Find products by title containing (case insensitive)
+     * Find products by title containing (case insensitive) with pagination
      */
-    List<Product> findByTitleContainingIgnoreCase(String title);
+    Page<Product> findByTitleContainingIgnoreCase(String title, Pageable pageable);
     
     /**
-     * Find all active products (not deleted)
+     * Find products by title containing and category with pagination
      */
-    @Query("SELECT p FROM Product p WHERE p.isDeleted = false ORDER BY p.title")
+    @Query("SELECT p FROM Product p WHERE p.title LIKE %:title% AND p.category.id = :categoryId ORDER BY p.title")
+    Page<Product> findByTitleContainingIgnoreCaseAndCategoryId(@Param("title") String title, @Param("categoryId") UUID categoryId, Pageable pageable);
+    
+    /**
+     * Find all products
+     */
+    @Query("SELECT p FROM Product p ORDER BY p.title")
     List<Product> findAllActive();
     
     /**
-     * Find all active products with pagination
+     * Find all products with pagination
      */
-    @Query("SELECT p FROM Product p WHERE p.isDeleted = false ORDER BY p.title")
+    @Query("SELECT p FROM Product p ORDER BY p.title")
     Page<Product> findAllActive(Pageable pageable);
     
     /**
      * Find products by category
      */
-    @Query("SELECT p FROM Product p WHERE p.category.id = :categoryId AND p.isDeleted = false ORDER BY p.title")
+    @Query("SELECT p FROM Product p WHERE p.category.id = :categoryId ORDER BY p.title")
     List<Product> findByCategoryId(@Param("categoryId") UUID categoryId);
     
     /**
      * Find products by category with pagination
      */
-    @Query("SELECT p FROM Product p WHERE p.category.id = :categoryId AND p.isDeleted = false ORDER BY p.title")
+    @Query("SELECT p FROM Product p WHERE p.category.id = :categoryId ORDER BY p.title")
     Page<Product> findByCategoryId(@Param("categoryId") UUID categoryId, Pageable pageable);
     
     /**
      * Find products with minimum order quantity
      */
-    @Query("SELECT p FROM Product p WHERE p.minimumOrderQuantity IS NOT NULL AND p.minimumOrderQuantity > 0 AND p.isDeleted = false ORDER BY p.title")
+    @Query("SELECT p FROM Product p WHERE p.minimumOrderQuantity IS NOT NULL AND p.minimumOrderQuantity > 0 ORDER BY p.title")
     List<Product> findProductsWithMinimumOrderQuantity();
     
     /**
      * Find products without minimum order quantity
      */
-    @Query("SELECT p FROM Product p WHERE (p.minimumOrderQuantity IS NULL OR p.minimumOrderQuantity = 0) AND p.isDeleted = false ORDER BY p.title")
+    @Query("SELECT p FROM Product p WHERE (p.minimumOrderQuantity IS NULL OR p.minimumOrderQuantity = 0) ORDER BY p.title")
     List<Product> findProductsWithoutMinimumOrderQuantity();
     
     /**
      * Find products by minimum order quantity range
      */
-    @Query("SELECT p FROM Product p WHERE p.minimumOrderQuantity BETWEEN :minQuantity AND :maxQuantity AND p.isDeleted = false ORDER BY p.title")
+    @Query("SELECT p FROM Product p WHERE p.minimumOrderQuantity BETWEEN :minQuantity AND :maxQuantity ORDER BY p.title")
     List<Product> findByMinimumOrderQuantityBetween(@Param("minQuantity") Integer minQuantity, @Param("maxQuantity") Integer maxQuantity);
     
     /**
      * Check if product title exists (excluding current product)
      */
-    @Query("SELECT COUNT(p) > 0 FROM Product p WHERE p.title = :title AND p.isDeleted = false AND (:excludeId IS NULL OR p.id != :excludeId)")
+    @Query("SELECT COUNT(p) > 0 FROM Product p WHERE p.title = :title AND (:excludeId IS NULL OR p.id != :excludeId)")
     boolean existsByTitleAndNotDeleted(@Param("title") String title, @Param("excludeId") UUID excludeId);
     
     /**
-     * Find product by ID and not deleted
+     * Find product by ID
      */
-    @Query("SELECT p FROM Product p WHERE p.id = :id AND p.isDeleted = false")
+    @Query("SELECT p FROM Product p WHERE p.id = :id")
     Optional<Product> findByIdAndNotDeleted(@Param("id") UUID id);
     
     /**
      * Count products by category
      */
-    @Query("SELECT COUNT(p) FROM Product p WHERE p.category.id = :categoryId AND p.isDeleted = false")
+    @Query("SELECT COUNT(p) FROM Product p WHERE p.category.id = :categoryId")
     long countByCategoryId(@Param("categoryId") UUID categoryId);
     
     /**
      * Find products with images
      */
-    @Query("SELECT p FROM Product p WHERE SIZE(p.images) > 0 AND p.isDeleted = false ORDER BY p.title")
+    @Query("SELECT p FROM Product p WHERE SIZE(p.images) > 0 ORDER BY p.title")
     List<Product> findProductsWithImages();
     
     /**
      * Find products with profile image
      */
-    @Query("SELECT p FROM Product p WHERE p.profileImage IS NOT NULL AND p.profileImage != '' AND p.isDeleted = false ORDER BY p.title")
+    @Query("SELECT p FROM Product p WHERE p.profileImage IS NOT NULL AND p.profileImage != '' ORDER BY p.title")
     List<Product> findProductsWithProfileImage();
+
+    /**
+     * Find products with low stock variants
+     */
+    @Query("SELECT DISTINCT p FROM Product p JOIN p.variants v WHERE v.stockQuantity <= v.lowStockThreshold ORDER BY p.title")
+    List<Product> findProductsWithLowStockVariants();
+
+    /**
+     * Find products without variants
+     */
+    @Query("SELECT p FROM Product p WHERE SIZE(p.variants) = 0 ORDER BY p.title")
+    List<Product> findProductsWithoutVariants();
+
+    /**
+     * Find products with variants
+     */
+    @Query("SELECT p FROM Product p WHERE SIZE(p.variants) > 0 ORDER BY p.title")
+    List<Product> findProductsWithVariants();
 }

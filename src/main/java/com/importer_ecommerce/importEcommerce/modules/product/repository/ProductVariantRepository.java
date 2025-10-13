@@ -15,107 +15,95 @@ import java.util.UUID;
 
 /**
  * Repository for ProductVariant entity
+ * Handles all database operations for product variants (SKUs)
  */
 @Repository
 public interface ProductVariantRepository extends JpaRepository<ProductVariant, UUID> {
-    
+
     /**
-     * Find variants by product ID
-     */
-    @Query("SELECT v FROM ProductVariant v WHERE v.product.id = :productId AND v.isDeleted = false ORDER BY v.sku")
-    List<ProductVariant> findByProductId(@Param("productId") UUID productId);
-    
-    /**
-     * Find variants by product ID with pagination
-     */
-    @Query("SELECT v FROM ProductVariant v WHERE v.product.id = :productId AND v.isDeleted = false ORDER BY v.sku")
-    Page<ProductVariant> findByProductId(@Param("productId") UUID productId, Pageable pageable);
-    
-    /**
-     * Find variant by SKU
+     * Find product variant by SKU
+     * Used to check if SKU already exists
      */
     Optional<ProductVariant> findBySku(String sku);
-    
+
     /**
-     * Find variant by SKU and not deleted
+     * Find all active product variants for a given product
+     * Returns variants that are active
      */
-    @Query("SELECT v FROM ProductVariant v WHERE v.sku = :sku AND v.isDeleted = false")
-    Optional<ProductVariant> findBySkuAndNotDeleted(@Param("sku") String sku);
-    
+    @Query("SELECT pv FROM ProductVariant pv WHERE pv.product.id = :productId AND pv.isActive = true ORDER BY pv.sku")
+    List<ProductVariant> findActiveByProductId(@Param("productId") UUID productId);
+
     /**
-     * Find variants by price range
+     * Find all product variants for a given product (including inactive)
      */
-    @Query("SELECT v FROM ProductVariant v WHERE v.price BETWEEN :minPrice AND :maxPrice AND v.isDeleted = false ORDER BY v.price")
-    List<ProductVariant> findByPriceBetween(@Param("minPrice") BigDecimal minPrice, @Param("maxPrice") BigDecimal maxPrice);
-    
+    @Query("SELECT pv FROM ProductVariant pv WHERE pv.product.id = :productId ORDER BY pv.sku")
+    List<ProductVariant> findByProductIdAndNotDeleted(@Param("productId") UUID productId);
+
     /**
-     * Find variants in stock
+     * Find all product variants for a given product with pagination
      */
-    @Query("SELECT v FROM ProductVariant v WHERE v.stockQuantity > 0 AND v.isDeleted = false ORDER BY v.sku")
-    List<ProductVariant> findInStock();
-    
+    @Query("SELECT pv FROM ProductVariant pv WHERE pv.product.id = :productId ORDER BY pv.sku")
+    Page<ProductVariant> findByProductIdAndNotDeleted(@Param("productId") UUID productId, Pageable pageable);
+
     /**
-     * Find variants out of stock
+     * Check if a SKU already exists (excluding a specific variant ID)
+     * Used for update operations to prevent duplicate SKUs
      */
-    @Query("SELECT v FROM ProductVariant v WHERE v.stockQuantity <= 0 AND v.isDeleted = false ORDER BY v.sku")
-    List<ProductVariant> findOutOfStock();
-    
+    @Query("SELECT COUNT(pv) > 0 FROM ProductVariant pv WHERE pv.sku = :sku AND (:excludeId IS NULL OR pv.id != :excludeId)")
+    boolean existsBySkuAndNotDeleted(@Param("sku") String sku, @Param("excludeId") UUID excludeId);
+
+    /**
+     * Find product variant by ID
+     */
+    @Query("SELECT pv FROM ProductVariant pv WHERE pv.id = :id")
+    Optional<ProductVariant> findByIdAndNotDeleted(@Param("id") UUID id);
+
     /**
      * Find variants with low stock
+     * Returns variants where stock is below the threshold
      */
-    @Query("SELECT v FROM ProductVariant v WHERE v.stockQuantity <= v.lowStockThreshold AND v.isDeleted = false ORDER BY v.stockQuantity")
-    List<ProductVariant> findLowStock();
-    
+    @Query("SELECT pv FROM ProductVariant pv WHERE pv.stockQuantity <= pv.lowStockThreshold AND pv.isActive = true ORDER BY pv.stockQuantity")
+    List<ProductVariant> findVariantsWithLowStock();
+
     /**
-     * Find active variants
+     * Find variants out of stock
+     * Returns variants with zero or negative stock
      */
-    @Query("SELECT v FROM ProductVariant v WHERE v.isActive = true AND v.isDeleted = false ORDER BY v.sku")
-    List<ProductVariant> findActive();
-    
+    @Query("SELECT pv FROM ProductVariant pv WHERE pv.stockQuantity <= 0 AND pv.isActive = true ORDER BY pv.sku")
+    List<ProductVariant> findVariantsOutOfStock();
+
     /**
-     * Find inactive variants
+     * Find variants in stock
+     * Returns variants with positive stock
      */
-    @Query("SELECT v FROM ProductVariant v WHERE v.isActive = false AND v.isDeleted = false ORDER BY v.sku")
-    List<ProductVariant> findInactive();
-    
+    @Query("SELECT pv FROM ProductVariant pv WHERE pv.stockQuantity > 0 AND pv.isActive = true ORDER BY pv.sku")
+    List<ProductVariant> findVariantsInStock();
+
+    /**
+     * Find variants by price range
+     * Returns variants within the specified price range
+     */
+    @Query("SELECT pv FROM ProductVariant pv WHERE pv.price BETWEEN :minPrice AND :maxPrice AND pv.isActive = true ORDER BY pv.price")
+    List<ProductVariant> findByPriceRange(@Param("minPrice") BigDecimal minPrice, @Param("maxPrice") BigDecimal maxPrice);
+
     /**
      * Find variants with discount (compare at price > price)
+     * Returns variants that have a compare at price higher than current price
      */
-    @Query("SELECT v FROM ProductVariant v WHERE v.compareAtPrice > v.price AND v.isDeleted = false ORDER BY v.price")
-    List<ProductVariant> findWithDiscount();
-    
+    @Query("SELECT pv FROM ProductVariant pv WHERE pv.compareAtPrice IS NOT NULL AND pv.compareAtPrice > pv.price AND pv.isActive = true ORDER BY pv.sku")
+    List<ProductVariant> findVariantsWithDiscount();
+
     /**
-     * Find variants by barcode
+     * Find variants by attribute value ID
+     * Returns variants that have a specific attribute value
      */
-    Optional<ProductVariant> findByBarcode(String barcode);
-    
+    @Query("SELECT pv FROM ProductVariant pv JOIN pv.attributeValues av WHERE av.id = :attributeValueId ORDER BY pv.sku")
+    List<ProductVariant> findByAttributeValueId(@Param("attributeValueId") UUID attributeValueId);
+
     /**
-     * Check if SKU exists (excluding current variant)
+     * Find variants by multiple attribute value IDs
+     * Returns variants that have all the specified attribute values
      */
-    @Query("SELECT COUNT(v) > 0 FROM ProductVariant v WHERE v.sku = :sku AND v.isDeleted = false AND (:excludeId IS NULL OR v.id != :excludeId)")
-    boolean existsBySkuAndNotDeleted(@Param("sku") String sku, @Param("excludeId") UUID excludeId);
-    
-    /**
-     * Check if barcode exists (excluding current variant)
-     */
-    @Query("SELECT COUNT(v) > 0 FROM ProductVariant v WHERE v.barcode = :barcode AND v.isDeleted = false AND (:excludeId IS NULL OR v.id != :excludeId)")
-    boolean existsByBarcodeAndNotDeleted(@Param("barcode") String barcode, @Param("excludeId") UUID excludeId);
-    
-    /**
-     * Count variants by product
-     */
-    @Query("SELECT COUNT(v) FROM ProductVariant v WHERE v.product.id = :productId AND v.isDeleted = false")
-    long countByProductId(@Param("productId") UUID productId);
-    
-    /**
-     * Find variants by product and active status
-     */
-    @Query("SELECT v FROM ProductVariant v WHERE v.product.id = :productId AND v.isActive = :isActive AND v.isDeleted = false ORDER BY v.sku")
-    List<ProductVariant> findByProductIdAndIsActive(@Param("productId") UUID productId, @Param("isActive") Boolean isActive);
-    
-    /**
-     * Find variants by product and stock status
-     */
-    @Query("SELECT v FROM ProductVariant v WHERE v.product.id = :productId AND v.stockQuantity > 0 AND v.isDeleted = false ORDER BY v.sku")
-    List<ProductVariant> findByProductIdAndInStock(@Param("productId") UUID productId);
+    @Query("SELECT pv FROM ProductVariant pv JOIN pv.attributeValues av WHERE av.id IN :attributeValueIds GROUP BY pv HAVING COUNT(DISTINCT av.id) = :expectedCount ORDER BY pv.sku")
+    List<ProductVariant> findByAttributeValueIds(@Param("attributeValueIds") List<UUID> attributeValueIds, @Param("expectedCount") Long expectedCount);
 }
