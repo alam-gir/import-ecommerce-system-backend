@@ -5,7 +5,13 @@ import com.importer_ecommerce.importEcommerce.common.dto.response.PaginationResp
 import com.importer_ecommerce.importEcommerce.common.exception.ApiException;
 import com.importer_ecommerce.importEcommerce.common.exception.NotFoundException;
 import com.importer_ecommerce.importEcommerce.common.util.RequestUtil;
+import com.importer_ecommerce.importEcommerce.modules.product.dto.request.AddProductDescriptionImagesRequest;
+import com.importer_ecommerce.importEcommerce.modules.product.dto.request.AddProductImagesRequest;
 import com.importer_ecommerce.importEcommerce.modules.product.dto.request.CreateProductRequest;
+import com.importer_ecommerce.importEcommerce.modules.product.dto.request.RemoveProductDescriptionImagesRequest;
+import com.importer_ecommerce.importEcommerce.modules.product.dto.request.RemoveProductImagesRequest;
+import com.importer_ecommerce.importEcommerce.modules.product.dto.request.UpdateProductCategoryRequest;
+import com.importer_ecommerce.importEcommerce.modules.product.dto.request.UpdateProductProfileImageRequest;
 import com.importer_ecommerce.importEcommerce.modules.product.dto.request.UpdateProductRequest;
 import com.importer_ecommerce.importEcommerce.modules.product.dto.response.ProductResponse;
 import com.importer_ecommerce.importEcommerce.modules.product.dto.response.ProductSummaryResponse;
@@ -252,6 +258,138 @@ public class ProductController {
         } catch (Exception e) {
             log.error("Unexpected error during products with variants retrieval", e);
             return RequestUtil.internalError("Failed to retrieve products with variants. Please try again.");
+        }
+    }
+    
+    /**
+     * Update product category only
+     */
+    @PutMapping("/{productId}/category")
+    public ResponseEntity<ApiResponse<Boolean>> updateProductCategory(
+            @PathVariable UUID productId,
+            @Valid @RequestBody UpdateProductCategoryRequest request) {
+        try {
+            boolean success = productService.updateProductCategory(productId, request.getCategoryId());
+            return RequestUtil.success("Product category updated successfully", success);
+        } catch (NotFoundException e) {
+            log.error("Product or category not found: {}", productId);
+            return RequestUtil.notFound(e.getMessage());
+        } catch (ApiException e) {
+            log.error("Product category update failed: {}", e.getMessage());
+            return RequestUtil.error(e.getMessage(), e.getHttpStatus());
+        } catch (Exception e) {
+            log.error("Unexpected error during product category update", e);
+            return RequestUtil.internalError("Failed to update product category. Please try again.");
+        }
+    }
+    
+    /**
+     * Update product profile image only
+     */
+    @PutMapping("/{productId}/profile-image")
+    public ResponseEntity<ApiResponse<Boolean>> updateProductProfileImage(
+            @PathVariable UUID productId,
+            @Valid @ModelAttribute UpdateProductProfileImageRequest request) {
+        try {
+            boolean success = productService.updateProductProfileImage(productId, request.getProfileImage());
+            return RequestUtil.success("Product profile image updated successfully", success);
+        } catch (NotFoundException e) {
+            log.error("Product not found: {}", productId);
+            return RequestUtil.notFound(e.getMessage());
+        } catch (ApiException e) {
+            log.error("Product profile image update failed: {}", e.getMessage());
+            return RequestUtil.error(e.getMessage(), e.getHttpStatus());
+        } catch (Exception e) {
+            log.error("Unexpected error during product profile image update", e);
+            return RequestUtil.internalError("Failed to update product profile image. Please try again.");
+        }
+    }
+    
+    /**
+     * Add images to product
+     */
+    @PostMapping("/{productId}/images")
+    public ResponseEntity<ApiResponse<Boolean>> addProductImages(
+            @PathVariable UUID productId,
+            @Valid @ModelAttribute AddProductImagesRequest request) {
+        try {
+            boolean success = productService.addProductImages(productId, request.getImages());
+            return RequestUtil.success("Product images added successfully", success);
+        } catch (NotFoundException e) {
+            log.error("Product not found: {}", productId);
+            return RequestUtil.notFound(e.getMessage());
+        } catch (ApiException e) {
+            log.error("Product images addition failed: {}", e.getMessage());
+            return RequestUtil.error(e.getMessage(), e.getHttpStatus());
+        } catch (Exception e) {
+            log.error("Unexpected error during product images addition", e);
+            return RequestUtil.internalError("Failed to add product images. Please try again.");
+        }
+    }
+    
+    /**
+     * Remove images from product
+     */
+    @DeleteMapping("/{productId}/images")
+    public ResponseEntity<ApiResponse<Boolean>> removeProductImages(
+            @PathVariable UUID productId,
+            @Valid @RequestBody RemoveProductImagesRequest request) {
+        try {
+            boolean success = productService.removeProductImages(productId, request.getImageUrls());
+            return RequestUtil.success("Product images removed successfully", success);
+        } catch (NotFoundException e) {
+            log.error("Product not found: {}", productId);
+            return RequestUtil.notFound(e.getMessage());
+        } catch (ApiException e) {
+            log.error("Product images removal failed: {}", e.getMessage());
+            return RequestUtil.error(e.getMessage(), e.getHttpStatus());
+        } catch (Exception e) {
+            log.error("Unexpected error during product images removal", e);
+            return RequestUtil.internalError("Failed to remove product images. Please try again.");
+        }
+    }
+    
+    /**
+     * Add description images to product
+     */
+    @PostMapping("/{productId}/description-images")
+    public ResponseEntity<ApiResponse<Boolean>> addProductDescriptionImages(
+            @PathVariable UUID productId,
+            @Valid @ModelAttribute AddProductDescriptionImagesRequest request) {
+        try {
+            boolean success = productService.addProductDescriptionImages(productId, request.getDescriptionImages());
+            return RequestUtil.success("Product description images added successfully", success);
+        } catch (NotFoundException e) {
+            log.error("Product not found: {}", productId);
+            return RequestUtil.notFound(e.getMessage());
+        } catch (ApiException e) {
+            log.error("Product description images addition failed: {}", e.getMessage());
+            return RequestUtil.error(e.getMessage(), e.getHttpStatus());
+        } catch (Exception e) {
+            log.error("Unexpected error during product description images addition", e);
+            return RequestUtil.internalError("Failed to add product description images. Please try again.");
+        }
+    }
+    
+    /**
+     * Remove description images from product
+     */
+    @DeleteMapping("/{productId}/description-images")
+    public ResponseEntity<ApiResponse<Boolean>> removeProductDescriptionImages(
+            @PathVariable UUID productId,
+            @Valid @RequestBody RemoveProductDescriptionImagesRequest request) {
+        try {
+            boolean success = productService.removeProductDescriptionImages(productId, request.getDescriptionImageUrls());
+            return RequestUtil.success("Product description images removed successfully", success);
+        } catch (NotFoundException e) {
+            log.error("Product not found: {}", productId);
+            return RequestUtil.notFound(e.getMessage());
+        } catch (ApiException e) {
+            log.error("Product description images removal failed: {}", e.getMessage());
+            return RequestUtil.error(e.getMessage(), e.getHttpStatus());
+        } catch (Exception e) {
+            log.error("Unexpected error during product description images removal", e);
+            return RequestUtil.internalError("Failed to remove product description images. Please try again.");
         }
     }
 }

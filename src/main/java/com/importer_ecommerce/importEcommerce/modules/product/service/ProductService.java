@@ -90,5 +90,41 @@ public interface ProductService {
      * Returns products within the specified quantity range
      */
     List<Product> getProductsByMinimumOrderQuantityRange(Integer minQuantity, Integer maxQuantity);
+    
+    /**
+     * Update product category only
+     * Changes the category of an existing product
+     */
+    boolean updateProductCategory(UUID productId, UUID categoryId);
+    
+    /**
+     * Update product profile image only
+     * Replaces the existing profile image
+     */
+    boolean updateProductProfileImage(UUID productId, MultipartFile profileImage);
+    
+    /**
+     * Add images to product
+     * Adds new images to the existing product images list
+     */
+    boolean addProductImages(UUID productId, List<MultipartFile> images);
+    
+    /**
+     * Remove images from product
+     * Removes specific images from the product images list
+     */
+    boolean removeProductImages(UUID productId, List<String> imageUrls);
+    
+    /**
+     * Add description images to product
+     * Adds new description images to the existing product description images list
+     */
+    boolean addProductDescriptionImages(UUID productId, List<MultipartFile> descriptionImages);
+    
+    /**
+     * Remove description images from product
+     * Removes specific description images from the product description images list
+     */
+    boolean removeProductDescriptionImages(UUID productId, List<String> descriptionImageUrls);
 }
 

@@ -292,5 +292,223 @@ public class ProductServiceImpl implements ProductService {
     public List<Product> getProductsByMinimumOrderQuantityRange(Integer minQuantity, Integer maxQuantity) {
         return productRepository.findByMinimumOrderQuantityBetween(minQuantity, maxQuantity);
     }
+    
+    @Override
+    @Transactional
+    public boolean updateProductCategory(UUID productId, UUID categoryId) {
+        try {
+            Product product = getProductById(productId);
+            
+            // Validate category exists
+            Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new NotFoundException("Category not found with ID: " + categoryId));
+            
+            product.setCategory(category);
+            productRepository.save(product);
+            
+            log.info("Product category updated successfully: {} -> {}", product.getTitle(), category.getTitle());
+            return true;
+            
+        } catch (NotFoundException e) {
+            // Re-throw NotFoundException to be handled by controller
+            throw e;
+        } catch (Exception e) {
+            log.error("Failed to update product category: {}", e.getMessage());
+            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to update product category: " + e.getMessage());
+        }
+    }
+    
+    @Override
+    @Transactional
+    public boolean updateProductProfileImage(UUID productId, MultipartFile profileImage) {
+        try {
+            Product product = getProductById(productId);
+            
+            String oldImageUrl = product.getProfileImage();
+            String newImageUrl = null;
+            
+            if (profileImage != null && !profileImage.isEmpty()) {
+                newImageUrl = cloudflareService.uploadFile(profileImage, "products");
+                log.info("New product profile image uploaded to Cloudflare: {}", newImageUrl);
+                
+                // Delete old image if it exists
+                if (oldImageUrl != null && !oldImageUrl.isEmpty()) {
+                    try {
+                        cloudflareService.deleteFile(oldImageUrl);
+                        log.info("Old product profile image deleted from Cloudflare: {}", oldImageUrl);
+                    } catch (Exception e) {
+                        log.warn("Failed to delete old product profile image: {}", e.getMessage());
+                    }
+                }
+            }
+            
+            product.setProfileImage(newImageUrl);
+            productRepository.save(product);
+            
+            log.info("Product profile image updated successfully: {}", product.getTitle());
+            return true;
+            
+        } catch (NotFoundException e) {
+            // Re-throw NotFoundException to be handled by controller
+            throw e;
+        } catch (Exception e) {
+            log.error("Failed to update product profile image: {}", e.getMessage());
+            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to update product profile image: " + e.getMessage());
+        }
+    }
+    
+    @Override
+    @Transactional
+    public boolean addProductImages(UUID productId, List<MultipartFile> images) {
+        try {
+            Product product = getProductById(productId);
+            
+            if (images != null && !images.isEmpty()) {
+                List<String> newImageUrls = new ArrayList<>();
+                
+                for (MultipartFile image : images) {
+                    if (image != null && !image.isEmpty()) {
+                        String imageUrl = cloudflareService.uploadFile(image, "products");
+                        newImageUrls.add(imageUrl);
+                        log.info("New product image uploaded to Cloudflare: {}", imageUrl);
+                    }
+                }
+                
+                // Add new images to existing images
+                List<String> existingImages = product.getImages() != null ? new ArrayList<>(product.getImages()) : new ArrayList<>();
+                existingImages.addAll(newImageUrls);
+                product.setImages(existingImages);
+                
+                productRepository.save(product);
+                log.info("Product images added successfully: {} ({} new images)", product.getTitle(), newImageUrls.size());
+            }
+            
+            return true;
+            
+        } catch (NotFoundException e) {
+            // Re-throw NotFoundException to be handled by controller
+            throw e;
+        } catch (Exception e) {
+            log.error("Failed to add product images: {}", e.getMessage());
+            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to add product images: " + e.getMessage());
+        }
+    }
+    
+    @Override
+    @Transactional
+    public boolean removeProductImages(UUID productId, List<String> imageUrls) {
+        try {
+            Product product = getProductById(productId);
+            
+            if (imageUrls != null && !imageUrls.isEmpty() && product.getImages() != null) {
+                List<String> existingImages = new ArrayList<>(product.getImages());
+                
+                for (String imageUrl : imageUrls) {
+                    if (existingImages.contains(imageUrl)) {
+                        // Delete from Cloudflare
+                        try {
+                            cloudflareService.deleteFile(imageUrl);
+                            log.info("Product image deleted from Cloudflare: {}", imageUrl);
+                        } catch (Exception e) {
+                            log.warn("Failed to delete product image from Cloudflare: {}", e.getMessage());
+                        }
+                        
+                        // Remove from list
+                        existingImages.remove(imageUrl);
+                    }
+                }
+                
+                product.setImages(existingImages);
+                productRepository.save(product);
+                log.info("Product images removed successfully: {} ({} images removed)", product.getTitle(), imageUrls.size());
+            }
+            
+            return true;
+            
+        } catch (NotFoundException e) {
+            // Re-throw NotFoundException to be handled by controller
+            throw e;
+        } catch (Exception e) {
+            log.error("Failed to remove product images: {}", e.getMessage());
+            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to remove product images: " + e.getMessage());
+        }
+    }
+    
+    @Override
+    @Transactional
+    public boolean addProductDescriptionImages(UUID productId, List<MultipartFile> descriptionImages) {
+        try {
+            Product product = getProductById(productId);
+            
+            if (descriptionImages != null && !descriptionImages.isEmpty()) {
+                List<String> newDescriptionImageUrls = new ArrayList<>();
+                
+                for (MultipartFile image : descriptionImages) {
+                    if (image != null && !image.isEmpty()) {
+                        String imageUrl = cloudflareService.uploadFile(image, "products/description");
+                        newDescriptionImageUrls.add(imageUrl);
+                        log.info("New product description image uploaded to Cloudflare: {}", imageUrl);
+                    }
+                }
+                
+                // Add new description images to existing description images
+                List<String> existingDescriptionImages = product.getDescriptionImages() != null ? new ArrayList<>(product.getDescriptionImages()) : new ArrayList<>();
+                existingDescriptionImages.addAll(newDescriptionImageUrls);
+                product.setDescriptionImages(existingDescriptionImages);
+                
+                productRepository.save(product);
+                log.info("Product description images added successfully: {} ({} new images)", product.getTitle(), newDescriptionImageUrls.size());
+            }
+            
+            return true;
+            
+        } catch (NotFoundException e) {
+            // Re-throw NotFoundException to be handled by controller
+            throw e;
+        } catch (Exception e) {
+            log.error("Failed to add product description images: {}", e.getMessage());
+            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to add product description images: " + e.getMessage());
+        }
+    }
+    
+    @Override
+    @Transactional
+    public boolean removeProductDescriptionImages(UUID productId, List<String> descriptionImageUrls) {
+        try {
+            Product product = getProductById(productId);
+            
+            if (descriptionImageUrls != null && !descriptionImageUrls.isEmpty() && product.getDescriptionImages() != null) {
+                List<String> existingDescriptionImages = new ArrayList<>(product.getDescriptionImages());
+                
+                for (String imageUrl : descriptionImageUrls) {
+                    if (existingDescriptionImages.contains(imageUrl)) {
+                        // Delete from Cloudflare
+                        try {
+                            cloudflareService.deleteFile(imageUrl);
+                            log.info("Product description image deleted from Cloudflare: {}", imageUrl);
+                        } catch (Exception e) {
+                            log.warn("Failed to delete product description image from Cloudflare: {}", e.getMessage());
+                        }
+                        
+                        // Remove from list
+                        existingDescriptionImages.remove(imageUrl);
+                    }
+                }
+                
+                product.setDescriptionImages(existingDescriptionImages);
+                productRepository.save(product);
+                log.info("Product description images removed successfully: {} ({} images removed)", product.getTitle(), descriptionImageUrls.size());
+            }
+            
+            return true;
+            
+        } catch (NotFoundException e) {
+            // Re-throw NotFoundException to be handled by controller
+            throw e;
+        } catch (Exception e) {
+            log.error("Failed to remove product description images: {}", e.getMessage());
+            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to remove product description images: " + e.getMessage());
+        }
+    }
 }
 
