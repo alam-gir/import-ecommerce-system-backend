@@ -42,7 +42,7 @@ public class ProductServiceImpl implements ProductService {
                                List<MultipartFile> images, List<MultipartFile> descriptionImages) {
         try {
             // Validate category exists
-            Category category = categoryRepository.findByIdAndNotDeleted(UUID.fromString(categoryId))
+            Category category = categoryRepository.findById(UUID.fromString(categoryId))
                 .orElseThrow(() -> new NotFoundException("Category not found with ID: " + categoryId));
             
             // Check if product title already exists
@@ -113,7 +113,7 @@ public class ProductServiceImpl implements ProductService {
             Product product = getProductById(productId);
             
             // Validate category exists
-            Category category = categoryRepository.findByIdAndNotDeleted(UUID.fromString(categoryId))
+            Category category = categoryRepository.findById(UUID.fromString(categoryId))
                 .orElseThrow(() -> new NotFoundException("Category not found with ID: " + categoryId));
             
             // Check if product title already exists (excluding current product)

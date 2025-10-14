@@ -5,6 +5,5 @@ package com.importer_ecommerce.importEcommerce.modules.product.entity;
  */
 public enum CategoryStatus {
     ACTIVE,
-    INACTIVE,
-    SUSPENDED
+    INACTIVE
 }

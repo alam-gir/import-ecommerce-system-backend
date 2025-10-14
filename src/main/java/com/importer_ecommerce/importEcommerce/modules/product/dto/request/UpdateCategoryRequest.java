@@ -6,6 +6,8 @@ import jakarta.validation.constraints.Size;
 import lombok.Data;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.UUID;
+
 /**
  * Request DTO for updating a category
  */
@@ -22,4 +24,6 @@ public class UpdateCategoryRequest {
     private MultipartFile image;
     
     private CategoryStatus status;
+    
+    private UUID parentId; // Optional parent category - null to remove parent
 }

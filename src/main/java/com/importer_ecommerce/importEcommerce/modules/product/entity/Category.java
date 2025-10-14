@@ -22,7 +22,7 @@ public class Category extends AuditableEntity {
     @Column(nullable = false, length = 255)
     private String title;
     
-    @Column(length = 500)
+    @Column(length = 500, columnDefinition = "TEXT")
     private String image;
     
     @Column(columnDefinition = "TEXT")
@@ -33,23 +33,38 @@ public class Category extends AuditableEntity {
     @Builder.Default
     private CategoryStatus status = CategoryStatus.ACTIVE;
     
-    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_id")
+    private Category parent;
+    
+    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
-    private List<Product> products = new ArrayList<>();
+    private List<Category> children = new ArrayList<>();
     
     /**
-     * Add product to category
+     * Check if category is root (has no parent)
      */
-    public void addProduct(Product product) {
-        products.add(product);
-        product.setCategory(this);
+    public boolean isRoot() {
+        return parent == null;
     }
     
     /**
-     * Remove product from category
+     * Check if category has children
      */
-    public void removeProduct(Product product) {
-        products.remove(product);
-        product.setCategory(null);
+    public boolean hasChildren() {
+        return children != null && !children.isEmpty();
+    }
+    
+    /**
+     * Get category level (0 for root, 1 for first level, etc.)
+     */
+    public int getLevel() {
+        int level = 0;
+        Category current = parent;
+        while (current != null) {
+            level++;
+            current = current.getParent();
+        }
+        return level;
     }
 }

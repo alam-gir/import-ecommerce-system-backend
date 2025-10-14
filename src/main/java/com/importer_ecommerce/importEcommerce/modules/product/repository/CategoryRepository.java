@@ -25,27 +25,19 @@ public interface CategoryRepository extends JpaRepository<Category, UUID> {
     Optional<Category> findByTitleIgnoreCase(String title);
     
     /**
-     * Find categories by title containing (case insensitive)
+     * Find all categories with pagination and filtering
      */
-    List<Category> findByTitleContainingIgnoreCase(String title);
+    Page<Category> findByTitleContainingIgnoreCaseAndStatus(String title, CategoryStatus status, Pageable pageable);
     
     /**
-     * Find all categories
+     * Find all categories with pagination and filtering by title only
      */
-    @Query("SELECT c FROM Category c ORDER BY c.title")
-    List<Category> findAllActive();
+    Page<Category> findByTitleContainingIgnoreCase(String title, Pageable pageable);
     
     /**
-     * Find all categories with pagination
+     * Find all categories with pagination and filtering by status only
      */
-    @Query("SELECT c FROM Category c ORDER BY c.title")
-    Page<Category> findAllActive(Pageable pageable);
-    
-    /**
-     * Find categories with products count
-     */
-    @Query("SELECT c FROM Category c LEFT JOIN FETCH c.products p")
-    List<Category> findAllWithActiveProducts();
+    Page<Category> findByStatus(CategoryStatus status, Pageable pageable);
     
     /**
      * Check if category title exists (excluding current category)
@@ -54,26 +46,54 @@ public interface CategoryRepository extends JpaRepository<Category, UUID> {
     boolean existsByTitleAndNotDeleted(@Param("title") String title, @Param("excludeId") UUID excludeId);
     
     /**
-     * Find category by ID
+     * Find root categories (categories with no parent)
      */
-    @Query("SELECT c FROM Category c WHERE c.id = :id")
-    Optional<Category> findByIdAndNotDeleted(@Param("id") UUID id);
+    @Query("SELECT c FROM Category c WHERE c.parent IS NULL ORDER BY c.title")
+    List<Category> findRootCategories();
     
     /**
-     * Find categories by title containing with pagination
+     * Find child categories by parent ID
      */
-    @Query("SELECT c FROM Category c WHERE c.title ILIKE %:search% ORDER BY c.title")
-    Page<Category> findByTitleContainingIgnoreCaseAndNotDeleted(@Param("search") String search, Pageable pageable);
+    @Query("SELECT c FROM Category c WHERE c.parent.id = :parentId ORDER BY c.title")
+    List<Category> findByParentId(@Param("parentId") UUID parentId);
     
     /**
-     * Find categories by status with pagination
+     * Find all categories in hierarchical order (root first, then children)
      */
-    @Query("SELECT c FROM Category c WHERE c.status = :status ORDER BY c.title")
-    Page<Category> findByStatusAndNotDeleted(@Param("status") CategoryStatus status, Pageable pageable);
+    @Query("SELECT c FROM Category c ORDER BY c.parent.id NULLS FIRST, c.title")
+    List<Category> findAllHierarchical();
     
     /**
-     * Find categories by title containing, status with pagination
+     * Find category with its parent and children
      */
-    @Query("SELECT c FROM Category c WHERE c.title ILIKE %:search% AND c.status = :status ORDER BY c.title")
-    Page<Category> findByTitleContainingIgnoreCaseAndStatusAndNotDeleted(@Param("search") String search, @Param("status") CategoryStatus status, Pageable pageable);
+    @Query("SELECT c FROM Category c LEFT JOIN FETCH c.parent LEFT JOIN FETCH c.children WHERE c.id = :id")
+    Optional<Category> findByIdWithParentAndChildren(@Param("id") UUID id);
+    
+    /**
+     * Check if category has children
+     */
+    @Query("SELECT COUNT(c) > 0 FROM Category c WHERE c.parent.id = :parentId")
+    boolean hasChildren(@Param("parentId") UUID parentId);
+    
+    /**
+     * Find root categories (level 0)
+     */
+    @Query("SELECT c FROM Category c WHERE c.parent IS NULL ORDER BY c.title")
+    Page<Category> findRootCategoriesPage(Pageable pageable);
+    
+    /**
+     * Find categories by level using recursive approach
+     */
+    @Query("SELECT c FROM Category c WHERE c.parent IS NOT NULL ORDER BY c.title")
+    List<Category> findAllWithParent();
+    
+    /**
+     * Get maximum level of categories in the database using a simpler approach
+     */
+    @Query("SELECT MAX(" +
+           "CASE " +
+           "WHEN c.parent IS NULL THEN 0 " +
+           "ELSE 1 " +
+           "END) FROM Category c")
+    Integer findMaxLevelSimple();
 }

@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -16,12 +17,12 @@ public interface CategoryService {
     /**
      * Create a new category
      */
-    boolean createCategory(String title, String description, MultipartFile image);
+    Category createCategory(String title, String description, MultipartFile image, UUID parentId);
     
     /**
      * Update an existing category
      */
-    boolean updateCategory(UUID categoryId, String title, String description, MultipartFile image, CategoryStatus status);
+    Category updateCategory(UUID categoryId, String title, String description, MultipartFile image, CategoryStatus status, UUID parentId);
     
     /**
      * Get category by ID
@@ -29,22 +30,62 @@ public interface CategoryService {
     Category getCategoryById(UUID categoryId);
     
     /**
-     * Get all categories with pagination and filtering
+     * Get category by title
      */
-    Page<Category> getAllCategories(Pageable pageable, String search, CategoryStatus status);
+    Category getCategoryByTitle(String title);
     
     /**
-     * Delete category by ID
+     * Get all categories with pagination and filtering
      */
-    boolean deleteCategory(UUID categoryId);
+    Page<Category> getAllCategories(Pageable pageable, String search, CategoryStatus status, Integer level);
+    
+    /**
+     * Get root categories (categories with no parent)
+     */
+    List<Category> getRootCategories();
+    
+    /**
+     * Get child categories by parent ID
+     */
+    List<Category> getChildCategories(UUID parentId);
+    
+    /**
+     * Get all categories in hierarchical order (flat list)
+     */
+    List<Category> getAllCategoriesHierarchical();
+    
+    /**
+     * Get category hierarchy by category ID (with parent and children)
+     */
+    Category getCategoryHierarchy(UUID categoryId);
+    
+    /**
+     * Update category parent
+     */
+    Category updateCategoryParent(UUID categoryId, UUID parentId);
     
     /**
      * Update category status only
      */
-    boolean updateCategoryStatus(UUID categoryId, CategoryStatus status);
+    Category updateCategoryStatus(UUID categoryId, CategoryStatus status);
+    
+    /**
+     * Delete category by ID
+     */
+    void deleteCategory(UUID categoryId);
     
     /**
      * Check if category title exists (excluding current category)
      */
     boolean existsByTitle(String title, UUID excludeId);
+
+    /**
+     * Get parent options for a specific category (excludes self and descendants)
+     */
+    List<Category> getParentOptions(UUID categoryId);
+    
+    /**
+     * Get maximum level of categories in the database
+     */
+    Integer getMaxLevel();
 }

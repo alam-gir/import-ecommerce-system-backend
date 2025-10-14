@@ -5,6 +5,8 @@ import jakarta.validation.constraints.Size;
 import lombok.Data;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.UUID;
+
 /**
  * Request DTO for creating a category
  */
@@ -19,4 +21,6 @@ public class CreateCategoryRequest {
     private String description;
     
     private MultipartFile image;
+    
+    private UUID parentId; // Optional parent category
 }
