@@ -106,4 +106,42 @@ public interface ProductVariantRepository extends JpaRepository<ProductVariant, 
      */
     @Query("SELECT pv FROM ProductVariant pv JOIN pv.attributeValues av WHERE av.id IN :attributeValueIds GROUP BY pv HAVING COUNT(DISTINCT av.id) = :expectedCount ORDER BY pv.sku")
     List<ProductVariant> findByAttributeValueIds(@Param("attributeValueIds") List<UUID> attributeValueIds, @Param("expectedCount") Long expectedCount);
+    
+    // Inventory Management Methods
+    
+    /**
+     * Find variants with low stock below threshold
+     */
+    @Query("SELECT pv FROM ProductVariant pv WHERE pv.stockQuantity <= :threshold AND pv.isActive = true ORDER BY pv.stockQuantity")
+    Page<ProductVariant> findLowStockVariants(@Param("threshold") Integer threshold, Pageable pageable);
+    
+    /**
+     * Find variants that are out of stock
+     */
+    @Query("SELECT pv FROM ProductVariant pv WHERE pv.stockQuantity <= 0 AND pv.isActive = true ORDER BY pv.sku")
+    Page<ProductVariant> findOutOfStockVariants(Pageable pageable);
+    
+    /**
+     * Count variants with low stock
+     */
+    @Query("SELECT COUNT(pv) FROM ProductVariant pv WHERE pv.stockQuantity <= :threshold AND pv.isActive = true")
+    int countLowStockVariants(@Param("threshold") Integer threshold);
+    
+    /**
+     * Count variants that are out of stock
+     */
+    @Query("SELECT COUNT(pv) FROM ProductVariant pv WHERE pv.stockQuantity <= 0 AND pv.isActive = true")
+    int countOutOfStockVariants();
+    
+    /**
+     * Get total stock quantity across all variants
+     */
+    @Query("SELECT COALESCE(SUM(pv.stockQuantity), 0) FROM ProductVariant pv WHERE pv.isActive = true")
+    int getTotalStockQuantity();
+    
+    /**
+     * Get total stock value across all variants (stock quantity * price)
+     */
+    @Query("SELECT COALESCE(SUM(pv.stockQuantity * pv.price), 0) FROM ProductVariant pv WHERE pv.isActive = true")
+    BigDecimal getTotalStockValue();
 }
