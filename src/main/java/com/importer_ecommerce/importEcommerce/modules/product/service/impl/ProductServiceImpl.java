@@ -4,8 +4,10 @@ import com.importer_ecommerce.importEcommerce.cloudflare.service.CloudflareServi
 import com.importer_ecommerce.importEcommerce.common.exception.ApiException;
 import com.importer_ecommerce.importEcommerce.common.exception.ConflictException;
 import com.importer_ecommerce.importEcommerce.common.exception.NotFoundException;
+import com.importer_ecommerce.importEcommerce.common.util.SlugUtil;
 import com.importer_ecommerce.importEcommerce.modules.product.entity.Category;
 import com.importer_ecommerce.importEcommerce.modules.product.entity.Product;
+import com.importer_ecommerce.importEcommerce.modules.product.entity.ProductStatus;
 import com.importer_ecommerce.importEcommerce.modules.product.repository.CategoryRepository;
 import com.importer_ecommerce.importEcommerce.modules.product.repository.ProductRepository;
 import com.importer_ecommerce.importEcommerce.modules.product.service.ProductService;
@@ -50,9 +52,14 @@ public class ProductServiceImpl implements ProductService {
                 throw new ConflictException("Product with title '" + title + "' already exists");
             }
             
+            // Generate unique slug
+            String baseSlug = SlugUtil.generateSlug(title);
+            String slug = generateUniqueSlug(baseSlug);
+            
             // Create product entity
             Product product = Product.builder()
                 .title(title)
+                .slug(slug)
                 .description(description)
                 .category(category)
                 .minimumOrderQuantity(minimumOrderQuantity)
@@ -119,6 +126,14 @@ public class ProductServiceImpl implements ProductService {
             // Check if product title already exists (excluding current product)
             if (existsByTitle(title, productId)) {
                 throw new ConflictException("Product with title '" + title + "' already exists");
+            }
+            
+            // Generate new slug if title changed
+            String originalTitle = product.getTitle();
+            if (!title.equals(originalTitle)) {
+                String baseSlug = SlugUtil.generateSlug(title);
+                String slug = generateUniqueSlug(baseSlug, productId);
+                product.setSlug(slug);
             }
             
             // Update basic fields
@@ -508,6 +523,68 @@ public class ProductServiceImpl implements ProductService {
         } catch (Exception e) {
             log.error("Failed to remove product description images: {}", e.getMessage());
             throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to remove product description images: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Generate a unique slug for a new product
+     */
+    private String generateUniqueSlug(String baseSlug) {
+        String slug = baseSlug;
+        int counter = 1;
+        
+        while (productRepository.existsBySlug(slug)) {
+            slug = baseSlug + "-" + counter;
+            counter++;
+        }
+        
+        return slug;
+    }
+    
+    /**
+     * Generate a unique slug for an existing product (excluding current product)
+     */
+    private String generateUniqueSlug(String baseSlug, UUID excludeProductId) {
+        String slug = baseSlug;
+        int counter = 1;
+        
+        while (productRepository.existsBySlugAndIdNot(slug, excludeProductId)) {
+            slug = baseSlug + "-" + counter;
+            counter++;
+        }
+        
+        return slug;
+    }
+    
+    @Override
+    @Transactional
+    public boolean updateProductStatus(UUID productId, String status) {
+        try {
+            Product product = getProductById(productId);
+            
+            // Validate status
+            ProductStatus productStatus;
+            try {
+                productStatus = ProductStatus.valueOf(status.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                throw new ApiException(HttpStatus.BAD_REQUEST, "Invalid status. Must be ACTIVE or INACTIVE");
+            }
+            
+            product.setStatus(productStatus);
+            productRepository.save(product);
+            
+            log.info("Product status updated successfully: {} -> {}", product.getTitle(), status);
+            return true;
+            
+        } catch (NotFoundException e) {
+            // Re-throw NotFoundException to be handled by controller
+            throw e;
+        } catch (ApiException e) {
+            // Re-throw ApiException to be handled by controller
+            throw e;
+        } catch (Exception e) {
+            log.error("Failed to update product status: {}", e.getMessage());
+            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to update product status: " + e.getMessage());
         }
     }
 }

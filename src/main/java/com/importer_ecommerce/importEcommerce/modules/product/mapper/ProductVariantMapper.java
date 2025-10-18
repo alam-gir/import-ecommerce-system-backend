@@ -1,7 +1,7 @@
 package com.importer_ecommerce.importEcommerce.modules.product.mapper;
 
-import com.importer_ecommerce.importEcommerce.modules.product.dto.response.AttributeValueInfo;
 import com.importer_ecommerce.importEcommerce.modules.product.dto.response.ProductVariantResponse;
+import com.importer_ecommerce.importEcommerce.modules.product.dto.response.VariantAttributeDetailResponse;
 import com.importer_ecommerce.importEcommerce.modules.product.entity.ProductVariant;
 import com.importer_ecommerce.importEcommerce.modules.product.entity.VariantAttributeValue;
 import org.springframework.stereotype.Component;
@@ -18,7 +18,7 @@ public class ProductVariantMapper {
     
     /**
      * Convert ProductVariant entity to ProductVariantResponse
-     * Includes all linked attribute values
+     * Includes detailed attribute value information
      */
     public ProductVariantResponse toProductVariantResponse(ProductVariant variant) {
         if (variant == null) {
@@ -38,7 +38,7 @@ public class ProductVariantMapper {
             variant.getBarcode(),
             variant.getIsActive(),
             variant.getIsTracked(),
-            toAttributeValueInfos(variant.getAttributeValues()),
+            toVariantAttributeDetailResponses(variant.getAttributeValues()),
             variant.getCreatedAt(),
             variant.getUpdatedAt()
         );
@@ -58,35 +58,33 @@ public class ProductVariantMapper {
     }
     
     /**
-     * Convert list of VariantAttributeValue entities to AttributeValueInfo list
-     * Shows attribute names and values linked to a variant
+     * Convert list of VariantAttributeValue entities to VariantAttributeDetailResponse list
+     * Returns detailed attribute and value information
      */
-    private List<AttributeValueInfo> toAttributeValueInfos(List<VariantAttributeValue> values) {
+    private List<VariantAttributeDetailResponse> toVariantAttributeDetailResponses(List<VariantAttributeValue> values) {
         if (values == null) {
             return List.of();
         }
         
         return values.stream()
-            .map(this::toAttributeValueInfo)
+            .map(this::toVariantAttributeDetailResponse)
             .collect(Collectors.toList());
     }
     
     /**
-     * Convert VariantAttributeValue entity to AttributeValueInfo
-     * Shows attribute name, value, and image URL
+     * Convert VariantAttributeValue entity to VariantAttributeDetailResponse
+     * Includes complete attribute and value details
      */
-    private AttributeValueInfo toAttributeValueInfo(VariantAttributeValue value) {
+    private VariantAttributeDetailResponse toVariantAttributeDetailResponse(VariantAttributeValue value) {
         if (value == null) {
             return null;
         }
         
-        String attributeName = value.getVariantAttribute() != null 
-            ? value.getVariantAttribute().getName() 
-            : null;
-        
-        return new AttributeValueInfo(
+        return new VariantAttributeDetailResponse(
+            value.getVariantAttribute().getId(),
+            value.getVariantAttribute().getName(),
+            value.getVariantAttribute().getAttributeType().name(),
             value.getId(),
-            attributeName,
             value.getValue(),
             value.getImageUrl()
         );

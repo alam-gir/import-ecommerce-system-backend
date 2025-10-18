@@ -10,7 +10,6 @@ import com.importer_ecommerce.importEcommerce.modules.product.dto.request.Create
 import com.importer_ecommerce.importEcommerce.modules.product.dto.request.UpdateCategoryRequest;
 import com.importer_ecommerce.importEcommerce.modules.product.dto.response.CategoryResponse;
 import com.importer_ecommerce.importEcommerce.modules.product.dto.response.CategorySimpleResponse;
-import com.importer_ecommerce.importEcommerce.modules.product.dto.response.CategoryHierarchicalResponse;
 import com.importer_ecommerce.importEcommerce.modules.product.dto.response.CategoryOptionResponse;
 import com.importer_ecommerce.importEcommerce.modules.product.dto.response.CategoryTreeResponse;
 import com.importer_ecommerce.importEcommerce.modules.product.entity.Category;

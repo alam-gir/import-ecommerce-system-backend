@@ -13,6 +13,7 @@ import com.importer_ecommerce.importEcommerce.modules.product.dto.request.Remove
 import com.importer_ecommerce.importEcommerce.modules.product.dto.request.UpdateProductCategoryRequest;
 import com.importer_ecommerce.importEcommerce.modules.product.dto.request.UpdateProductProfileImageRequest;
 import com.importer_ecommerce.importEcommerce.modules.product.dto.request.UpdateProductRequest;
+import com.importer_ecommerce.importEcommerce.modules.product.dto.request.UpdateProductStatusRequest;
 import com.importer_ecommerce.importEcommerce.modules.product.dto.response.ProductResponse;
 import com.importer_ecommerce.importEcommerce.modules.product.dto.response.ProductSummaryResponse;
 import com.importer_ecommerce.importEcommerce.modules.product.entity.Product;
@@ -390,6 +391,28 @@ public class ProductController {
         } catch (Exception e) {
             log.error("Unexpected error during product description images removal", e);
             return RequestUtil.internalError("Failed to remove product description images. Please try again.");
+        }
+    }
+    
+    /**
+     * Update product status
+     */
+    @PutMapping("/{productId}/status")
+    public ResponseEntity<ApiResponse<Boolean>> updateProductStatus(
+            @PathVariable UUID productId,
+            @Valid @RequestBody UpdateProductStatusRequest request) {
+        try {
+            boolean success = productService.updateProductStatus(productId, request.status());
+            return RequestUtil.success("Product status updated successfully", success);
+        } catch (NotFoundException e) {
+            log.error("Product not found: {}", productId);
+            return RequestUtil.notFound(e.getMessage());
+        } catch (ApiException e) {
+            log.error("Product status update failed: {}", e.getMessage());
+            return RequestUtil.error(e.getMessage(), e.getHttpStatus());
+        } catch (Exception e) {
+            log.error("Unexpected error during product status update", e);
+            return RequestUtil.internalError("Failed to update product status. Please try again.");
         }
     }
 }

@@ -26,14 +26,15 @@ public class ProductMapper {
         return new ProductResponse(
             product.getId(),
             product.getTitle(),
+            product.getSlug(),
             product.getDescription(),
             product.getProfileImage(),
             product.getImages(),
             product.getDescriptionImages(),
             product.getMinimumOrderQuantity(),
+            product.getStatus().name(),
             toCategoryInfo(product.getCategory()),
-            toVariantAttributeResponses(product.getVariantAttributes()),
-            toProductVariantResponses(product.getVariants()),
+            toProductDetailVariantResponses(product.getVariants()),
             toProductSpecificationResponses(product.getSpecifications()),
             product.getCreatedAt(),
             product.getUpdatedAt()
@@ -60,14 +61,12 @@ public class ProductMapper {
         return new ProductSummaryResponse(
             product.getId(),
             product.getTitle(),
-            product.getDescription(),
             product.getProfileImage(),
-            product.getMinimumOrderQuantity(),
+            product.getStatus().name(),
             toCategoryInfo(product.getCategory()),
             variantCount,
             totalStock,
-            product.getCreatedAt(),
-            product.getUpdatedAt()
+            product.getCreatedAt()
         );
     }
     
@@ -81,142 +80,70 @@ public class ProductMapper {
         
         return new CategoryInfo(
             category.getId(),
-            category.getTitle(),
-            category.getImage()
+            category.getTitle()
         );
     }
     
     /**
-     * Convert list of VariantAttribute entities to VariantAttributeResponse list
+     * Convert list of ProductVariant entities to ProductDetailVariantResponse list
      */
-    private List<VariantAttributeResponse> toVariantAttributeResponses(List<VariantAttribute> attributes) {
-        if (attributes == null) {
-            return List.of();
-        }
-        
-        return attributes.stream()
-            .map(this::toVariantAttributeResponse)
-            .collect(Collectors.toList());
-    }
-    
-    /**
-     * Convert VariantAttribute entity to VariantAttributeResponse
-     */
-    private VariantAttributeResponse toVariantAttributeResponse(VariantAttribute attribute) {
-        if (attribute == null) {
-            return null;
-        }
-        
-        return new VariantAttributeResponse(
-            attribute.getId(),
-            attribute.getName(),
-            attribute.getAttributeType().name(),
-            toVariantAttributeValueResponses(attribute.getAttributeValues()),
-            attribute.getCreatedAt(),
-            attribute.getUpdatedAt()
-        );
-    }
-    
-    /**
-     * Convert list of VariantAttributeValue entities to VariantAttributeValueResponse list
-     */
-    private List<VariantAttributeValueResponse> toVariantAttributeValueResponses(List<VariantAttributeValue> values) {
-        if (values == null) {
-            return List.of();
-        }
-        
-        return values.stream()
-            .map(this::toVariantAttributeValueResponse)
-            .collect(Collectors.toList());
-    }
-    
-    /**
-     * Convert VariantAttributeValue entity to VariantAttributeValueResponse
-     */
-    private VariantAttributeValueResponse toVariantAttributeValueResponse(VariantAttributeValue value) {
-        if (value == null) {
-            return null;
-        }
-        
-        return new VariantAttributeValueResponse(
-            value.getId(),
-            value.getValue(),
-            value.getImageUrl(),
-            value.getCreatedAt(),
-            value.getUpdatedAt()
-        );
-    }
-    
-    /**
-     * Convert list of ProductVariant entities to ProductVariantResponse list
-     */
-    private List<ProductVariantResponse> toProductVariantResponses(List<ProductVariant> variants) {
+    private List<ProductDetailVariantResponse> toProductDetailVariantResponses(List<ProductVariant> variants) {
         if (variants == null) {
             return List.of();
         }
         
         return variants.stream()
-            .map(this::toProductVariantResponse)
+            .map(this::toProductDetailVariantResponse)
             .collect(Collectors.toList());
     }
     
     /**
-     * Convert ProductVariant entity to ProductVariantResponse
+     * Convert ProductVariant entity to ProductDetailVariantResponse
      */
-    private ProductVariantResponse toProductVariantResponse(ProductVariant variant) {
+    private ProductDetailVariantResponse toProductDetailVariantResponse(ProductVariant variant) {
         if (variant == null) {
             return null;
         }
         
-        return new ProductVariantResponse(
+        return new ProductDetailVariantResponse(
             variant.getId(),
             variant.getSku(),
             variant.getPrice(),
             variant.getCompareAtPrice(),
-            variant.getCostPrice(),
             variant.getStockQuantity(),
-            variant.getLowStockThreshold(),
-            variant.getWeight(),
-            variant.getDimensions(),
-            variant.getBarcode(),
             variant.getIsActive(),
-            variant.getIsTracked(),
-            toAttributeValueInfos(variant.getAttributeValues()),
-            variant.getCreatedAt(),
-            variant.getUpdatedAt()
+            toVariantAttributeDetailResponses(variant.getAttributeValues())
         );
     }
     
     /**
-     * Convert list of VariantAttributeValue entities to AttributeValueInfo list
-     * Used in variant context to show attribute names and values
+     * Convert list of VariantAttributeValue entities to VariantAttributeDetailResponse list
+     * Returns detailed attribute and value information
      */
-    private List<AttributeValueInfo> toAttributeValueInfos(List<VariantAttributeValue> values) {
+    private List<VariantAttributeDetailResponse> toVariantAttributeDetailResponses(List<VariantAttributeValue> values) {
         if (values == null) {
             return List.of();
         }
         
         return values.stream()
-            .map(this::toAttributeValueInfo)
+            .map(this::toVariantAttributeDetailResponse)
             .collect(Collectors.toList());
     }
     
     /**
-     * Convert VariantAttributeValue entity to AttributeValueInfo
-     * Shows attribute name, value, and image URL
+     * Convert VariantAttributeValue entity to VariantAttributeDetailResponse
+     * Includes complete attribute and value details
      */
-    private AttributeValueInfo toAttributeValueInfo(VariantAttributeValue value) {
+    private VariantAttributeDetailResponse toVariantAttributeDetailResponse(VariantAttributeValue value) {
         if (value == null) {
             return null;
         }
         
-        String attributeName = value.getVariantAttribute() != null 
-            ? value.getVariantAttribute().getName() 
-            : null;
-        
-        return new AttributeValueInfo(
+        return new VariantAttributeDetailResponse(
+            value.getVariantAttribute().getId(),
+            value.getVariantAttribute().getName(),
+            value.getVariantAttribute().getAttributeType().name(),
             value.getId(),
-            attributeName,
             value.getValue(),
             value.getImageUrl()
         );

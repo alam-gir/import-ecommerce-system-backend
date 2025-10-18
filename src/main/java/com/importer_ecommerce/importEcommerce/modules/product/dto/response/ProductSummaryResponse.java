@@ -10,12 +10,10 @@ import java.util.UUID;
 public record ProductSummaryResponse(
     UUID id,
     String title,
-    String description,
     String profileImage,
-    Integer minimumOrderQuantity,
+    String status,
     CategoryInfo category,
     Integer variantCount,
     Integer totalStock,
-    LocalDateTime createdAt,
-    LocalDateTime updatedAt
+    LocalDateTime createdAt
 ) {}

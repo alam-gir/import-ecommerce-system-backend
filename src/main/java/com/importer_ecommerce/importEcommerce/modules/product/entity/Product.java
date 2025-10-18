@@ -22,6 +22,9 @@ public class Product extends AuditableEntity {
     @Column(nullable = false, length = 255)
     private String title;
     
+    @Column(nullable = false, length = 255, unique = true)
+    private String slug;
+    
     @Column(length = 2000)
     private String description;
     
@@ -46,6 +49,11 @@ public class Product extends AuditableEntity {
     
     @Column(name = "minimum_order_quantity")
     private Integer minimumOrderQuantity;
+    
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    @Builder.Default
+    private ProductStatus status = ProductStatus.ACTIVE;
     
     // Product relationships
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
@@ -75,6 +83,13 @@ public class Product extends AuditableEntity {
      */
     public Integer getEffectiveMinimumQuantity() {
         return hasMinimumOrderQuantity() ? minimumOrderQuantity : 1;
+    }
+    
+    /**
+     * Check if product is active
+     */
+    public boolean isActive() {
+        return status == ProductStatus.ACTIVE;
     }
     
     /**

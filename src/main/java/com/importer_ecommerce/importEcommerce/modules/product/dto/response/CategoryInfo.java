@@ -7,7 +7,6 @@ import java.util.UUID;
  */
 public record CategoryInfo(
     UUID id,
-    String title,
-    String image
+    String title
 ) {}
 

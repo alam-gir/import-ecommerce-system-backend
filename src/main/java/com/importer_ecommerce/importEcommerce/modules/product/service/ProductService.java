@@ -126,5 +126,11 @@ public interface ProductService {
      * Removes specific description images from the product description images list
      */
     boolean removeProductDescriptionImages(UUID productId, List<String> descriptionImageUrls);
+    
+    /**
+     * Update product status
+     * Changes the status of an existing product (ACTIVE or INACTIVE)
+     */
+    boolean updateProductStatus(UUID productId, String status);
 }
 

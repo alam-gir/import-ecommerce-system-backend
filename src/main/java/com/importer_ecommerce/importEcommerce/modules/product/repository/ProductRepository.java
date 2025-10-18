@@ -123,4 +123,20 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
      */
     @Query("SELECT p FROM Product p WHERE SIZE(p.variants) > 0 ORDER BY p.title")
     List<Product> findProductsWithVariants();
+    
+    /**
+     * Check if product slug exists
+     */
+    boolean existsBySlug(String slug);
+    
+    /**
+     * Check if product slug exists (excluding current product)
+     */
+    @Query("SELECT COUNT(p) > 0 FROM Product p WHERE p.slug = :slug AND (:excludeId IS NULL OR p.id != :excludeId)")
+    boolean existsBySlugAndIdNot(@Param("slug") String slug, @Param("excludeId") UUID excludeId);
+    
+    /**
+     * Find product by slug
+     */
+    Optional<Product> findBySlug(String slug);
 }

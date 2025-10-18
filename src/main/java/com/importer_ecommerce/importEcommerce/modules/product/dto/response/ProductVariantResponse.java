@@ -22,7 +22,7 @@ public record ProductVariantResponse(
     String barcode,
     Boolean isActive,
     Boolean isTracked,
-    List<AttributeValueInfo> attributeValues,
+    List<VariantAttributeDetailResponse> attributeValues,
     LocalDateTime createdAt,
     LocalDateTime updatedAt
 ) {}

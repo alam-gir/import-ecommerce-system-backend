@@ -7,9 +7,7 @@ import java.util.UUID;
  * Shows which attribute values are linked to a variant
  */
 public record AttributeValueInfo(
-    UUID attributeValueId,
     String attributeName,
-    String value,
-    String imageUrl
+    String value
 ) {}
 

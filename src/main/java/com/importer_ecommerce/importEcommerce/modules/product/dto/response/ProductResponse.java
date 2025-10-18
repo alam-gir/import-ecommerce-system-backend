@@ -11,14 +11,15 @@ import java.util.UUID;
 public record ProductResponse(
     UUID id,
     String title,
+    String slug,
     String description,
     String profileImage,
     List<String> images,
     List<String> descriptionImages,
     Integer minimumOrderQuantity,
+    String status,
     CategoryInfo category,
-    List<VariantAttributeResponse> attributes,
-    List<ProductVariantResponse> variants,
+    List<ProductDetailVariantResponse> variants,
     List<ProductSpecificationResponse> specifications,
     LocalDateTime createdAt,
     LocalDateTime updatedAt
