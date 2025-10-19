@@ -3,7 +3,6 @@ package com.importer_ecommerce.importEcommerce.auth.service;
 import com.importer_ecommerce.importEcommerce.user.entity.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -69,11 +68,19 @@ public class JwtService {
     }
     
     /**
+     * Extract subject (email or phone) from token
+     */
+    public String extractSubject(String token) {
+        return extractClaim(token, Claims::getSubject);
+    }
+    
+    /**
      * Extract email from token
      */
     public String extractEmail(String token) {
         return extractClaim(token, claims -> claims.get("email", String.class));
     }
+    
     
     /**
      * Extract role from token
@@ -103,10 +110,13 @@ public class JwtService {
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", user.getId().toString());
         claims.put("email", user.getEmail());
+        claims.put("phone", user.getPhone());
         claims.put("role", user.getRole().name());
         claims.put("type", "access");
         
-        return createToken(claims, user.getEmail(), accessTokenExpiration);
+        // Use email as subject if available, otherwise use phone
+        String subject = user.getEmail() != null ? user.getEmail() : user.getPhone();
+        return createToken(claims, subject, accessTokenExpiration);
     }
     
     /**
@@ -116,11 +126,15 @@ public class JwtService {
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", user.getId().toString());
         claims.put("email", user.getEmail());
+        claims.put("phone", user.getPhone());
         claims.put("role", user.getRole().name());
         claims.put("type", "refresh");
         
-        return createToken(claims, user.getEmail(), refreshTokenExpiration);
+        // Use email as subject if available, otherwise use phone
+        String subject = user.getEmail() != null ? user.getEmail() : user.getPhone();
+        return createToken(claims, subject, refreshTokenExpiration);
     }
+    
     
     /**
      * Create JWT token
@@ -150,13 +164,14 @@ public class JwtService {
         }
     }
     
+    
     /**
      * Validate token with UserDetails
      */
     public boolean validateToken(String token, org.springframework.security.core.userdetails.UserDetails userDetails) {
         try {
-            String email = extractEmail(token);
-            return email.equals(userDetails.getUsername()) && !isTokenExpired(token);
+            String subject = extractSubject(token);
+            return subject.equals(userDetails.getUsername()) && !isTokenExpired(token);
         } catch (Exception e) {
             return false;
         }

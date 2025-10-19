@@ -59,17 +59,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
         
         try {
-            // Extract user email from JWT token
-            String userEmail = jwtService.extractEmail(jwt);
+            // Extract subject (email or phone) from JWT token
+            String subject = jwtService.extractSubject(jwt);
+            log.debug("Extracted subject from JWT: {}", subject);
             
-            if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                // Load user details
-                UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
+            if (subject != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                // Load user details using subject (email or phone)
+                UserDetails userDetails = userDetailsService.loadUserByUsername(subject);
+                log.debug("Loaded user details for subject: {}, username: {}", subject, userDetails.getUsername());
                 
                 // Validate JWT token
-                if (jwtService.validateToken(jwt, userDetails)) {
+                boolean isValidToken = jwtService.validateToken(jwt, userDetails);
+                log.debug("Token validation result: {}", isValidToken);
+                
+                if (isValidToken) {
                     // Extract role from JWT token
                     String role = jwtService.extractRole(jwt);
+                    log.debug("Extracted role from JWT: {}", role);
                     
                     // Create authentication token
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
@@ -80,10 +86,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
+                    
+                    log.debug("Authentication successful for subject: {}", subject);
+                } else {
+                    log.debug("Token validation failed for subject: {}", subject);
                 }
+            } else {
+                log.debug("Subject is null or authentication already exists. Subject: {}", subject);
             }
         } catch (Exception e) {
-            log.error("JWT authentication failed: {}", e.getMessage());
+            log.error("JWT authentication failed: {}", e.getMessage(), e);
             SecurityContextHolder.clearContext();
         }
         

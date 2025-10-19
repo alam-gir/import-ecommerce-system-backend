@@ -78,7 +78,7 @@ public class EmailTemplate {
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Welcome to %s</title>
+                <title>Welcome to {COMPANY_NAME}</title>
                 <style>
                     body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
                     .container { max-width: 600px; margin: 0 auto; padding: 20px; }
@@ -92,14 +92,14 @@ public class EmailTemplate {
             <body>
                 <div class="container">
                     <div class="header">
-                        <h1>Welcome to %s!</h1>
+                        <h1>Welcome to {COMPANY_NAME}!</h1>
                         <p>Your account has been successfully created</p>
                     </div>
                     <div class="content">
-                        <h2>Hello %s!</h2>
+                        <h2>Hello {RECIPIENT_NAME}!</h2>
                         
                         <div class="welcome-box">
-                            <p>Welcome to %s! We're excited to have you on board.</p>
+                            <p>Welcome to {COMPANY_NAME}! We're excited to have you on board.</p>
                             <p>Your account has been successfully created and you can now start exploring our platform.</p>
                         </div>
                         
@@ -113,14 +113,17 @@ public class EmailTemplate {
                         <p>If you have any questions or need assistance, please don't hesitate to contact us.</p>
                         
                         <div class="footer">
-                            <p>Best regards,<br>The %s Team</p>
-                            <p>Email: %s | Website: %s</p>
+                            <p>Best regards,<br>The {COMPANY_NAME} Team</p>
+                            <p>Email: {COMPANY_EMAIL} | Website: {COMPANY_WEBSITE}</p>
                         </div>
                     </div>
                 </div>
             </body>
             </html>
-            """.formatted(COMPANY_NAME, COMPANY_NAME, recipientName, COMPANY_NAME, COMPANY_NAME, COMPANY_EMAIL, COMPANY_WEBSITE);
+            """.replace("{COMPANY_NAME}", COMPANY_NAME)
+                .replace("{RECIPIENT_NAME}", recipientName)
+                .replace("{COMPANY_EMAIL}", COMPANY_EMAIL)
+                .replace("{COMPANY_WEBSITE}", COMPANY_WEBSITE);
     }
     
     /**
@@ -147,29 +150,33 @@ public class EmailTemplate {
             <body>
                 <div class="container">
                     <div class="header">
-                        <h1>%s</h1>
+                        <h1>{COMPANY_NAME}</h1>
                         <p>Password Reset Request</p>
                     </div>
                     <div class="content">
-                        <h2>Hello %s!</h2>
+                        <h2>Hello {RECIPIENT_NAME}!</h2>
                         
                         <div class="reset-box">
-                            <p>We received a request to reset your password for your %s account.</p>
+                            <p>We received a request to reset your password for your {COMPANY_NAME} account.</p>
                             <p>Click the button below to reset your password:</p>
-                            <a href="%s" class="button">Reset Password</a>
-                            <p><strong>This link will expire in 1 hour</strong></p>
+                            <a href="{RESET_LINK}" class="button">Reset Password</a>
+                            <p><strong>This link will expire in 10 minutes</strong></p>
                         </div>
                         
                         <p>If you didn't request this password reset, please ignore this email or contact our support team.</p>
                         
                         <div class="footer">
-                            <p>Best regards,<br>The %s Team</p>
-                            <p>Email: %s | Website: %s</p>
+                            <p>Best regards,<br>The {COMPANY_NAME} Team</p>
+                            <p>Email: {COMPANY_EMAIL} | Website: {COMPANY_WEBSITE}</p>
                         </div>
                     </div>
                 </div>
             </body>
             </html>
-            """.formatted(COMPANY_NAME, recipientName, COMPANY_NAME, resetLink, COMPANY_NAME, COMPANY_EMAIL, COMPANY_WEBSITE);
+            """.replace("{COMPANY_NAME}", COMPANY_NAME)
+                .replace("{RECIPIENT_NAME}", recipientName)
+                .replace("{RESET_LINK}", resetLink)
+                .replace("{COMPANY_EMAIL}", COMPANY_EMAIL)
+                .replace("{COMPANY_WEBSITE}", COMPANY_WEBSITE);
     }
 }

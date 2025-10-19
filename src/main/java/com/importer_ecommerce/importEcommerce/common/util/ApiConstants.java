@@ -17,6 +17,11 @@ public class ApiConstants {
         "/v1/auth/send-otp",
         "/v1/auth/verify-otp",
         "/v1/auth/refresh",
+        "/v1/customers/auth/check-phone",
+        "/v1/customers/auth/login",
+        "/v1/customers/auth/register",
+        "/v1/customers/auth/forgot-password",
+        "/v1/customers/auth/reset-password",
         "/v1/health",
         "/v1/actuator/**",
         "/error"
@@ -35,7 +40,9 @@ public class ApiConstants {
     // Common endpoints (require any authenticated user)
     public static final List<String> AUTHENTICATED_ENDPOINTS = Arrays.asList(
         "/v1/auth/logout",
-        "/v1/auth/profile"
+        "/v1/auth/profile",
+        "/v1/customers/profile",
+        "/v1/customers/email"
     );
     
     /**

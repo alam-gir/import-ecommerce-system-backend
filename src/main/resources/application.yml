@@ -24,3 +24,5 @@ app:
     same-site: Strict
     access-token-max-age-days: 7
     refresh-token-max-age-days: 7
+  frontend:
+    url: http://localhost:3000

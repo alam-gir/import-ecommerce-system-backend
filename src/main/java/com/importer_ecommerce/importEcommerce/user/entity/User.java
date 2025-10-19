@@ -3,9 +3,6 @@ package com.importer_ecommerce.importEcommerce.user.entity;
 import com.importer_ecommerce.importEcommerce.common.entity.AuditableEntity;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.Where;
-
-import java.util.UUID;
 
 /**
  * User entity representing both admin and regular users
@@ -32,6 +29,9 @@ public class User extends AuditableEntity {
     
     @Column(name = "name", nullable = false)
     private String name;
+    
+    @Column(name = "password")
+    private String password;
     
     @Column(name = "profile_image")
     private String profileImage;
